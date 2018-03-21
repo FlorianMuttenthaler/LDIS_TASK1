@@ -12,31 +12,43 @@ use ieee.numeric_std.all;
 --
 entity trng is
 
-	-- `length`, 'clk_slow', 'clock_fast',  'reset', 'mode', 'start' are the inputs of trng entity.
-	-- `rndnumb' is the output of the entitiy.
+	-- `length`, 'clk_slow', 'clk_fast' are the inputs of trng entity.
+	-- `seed' is the output of the entitiy.
 
 	port (
-		length: in unsigned integer;
+		length: in integer;
 		clk_slow: in std_logic;
-		cl_fast: in std_logic;
-		reset: in std_logic;
-		mode: in std_logic;
-		start: in std_logic;
-		rndnumber: out unsigned integer
+		clk_fast: in std_logic;
+	        --Length of vector is 1024
+		seed: out std_logic_vector(1023 downto 0) 
 	);
 
 end trng;
 --
 -------------------------------------------------------------------------------
 --
-architecture behavioral of trng is
-
-	signal seed: unsigned integer;
-
+architecture beh of trng is
+	signal i: integer := 0;
+	signal seed_array:std_logic_vector(1023 downto 0) := (others => '0');
 begin
+	sample_proc:process(clk_slow)
+		
+	begin
+		if rising_edge(clk_slow) then
+			seed_array(i) <= clk_fast;
+			i <= i + 1;
+		end if;
+	end process;
+
+	push_proc:process(i)
+
+	begin
+		if i = (length -1) then
+			seed <= seed_array;
+		end if;
+	end process;
 
 
-
-end trng;
+end beh;
 --
 -------------------------------------------------------------------------------

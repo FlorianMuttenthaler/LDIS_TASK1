@@ -1,99 +1,78 @@
 -------------------------------------------------------------------------------
 --
--- Full adder testbench
---
--- Source: http://ghdl.readthedocs.io/en/latest/using/QuickStartGuide.html
+-- TRNG Testbench
 --
 -------------------------------------------------------------------------------
 --
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+
 --  A testbench has no ports.
-entity adder_tb is
-end adder_tb;
+entity trng_tb is
+end trng_tb;
 --
 -------------------------------------------------------------------------------
 --
-architecture behav of adder_tb is
+architecture beh of trng_tb is
 
 	--  Declaration of the component that will be instantiated.
-	component adder
+	component trng
 
   		port (
-
-			i0, i1 : in bit;
-			ci : in bit;
-		 	s : out bit;
-			co : out bit
-		
+			length: in integer;
+			clk_slow: in std_logic;	
+			clk_fast: in std_logic;
+			seed: out std_logic_vector(1023 downto 0)
 		);
 
 	end component;
 
 	--  Specifies which entity is bound with the component.
-	for adder_0: adder use entity work.adder;
-	signal i0, i1, ci, s, co : bit;
-
+	for trng_0: trng use entity work.trng;								
+	constant clk_slow_Period : time := 20 ns; --50kHz
+	constant clk_fast_Period : time := 1 ns;  --1MHz
+	
+	signal length:integer;
+	signal clk_slow: std_logic;	
+	signal clk_fast: std_logic;
+	signal seed: std_logic_vector(1023 downto 0);
 begin
 
 	--  Component instantiation.
-	adder_0: adder port map (
-		i0 => i0,
-	 	i1 => i1,
-		ci => ci,
-		s => s,
-		co => co
+	trng_0: trng port map (
+		length => length,
+	 	clk_slow => clk_slow,
+		clk_fast => clk_fast,
+		seed => seed
 	);
 
+	clk_slow_gen: process
+	begin
+		clk_slow <= '0';
+		wait for clk_slow_Period/2;
+		clk_slow <= '1';
+		wait for clk_slow_Period/2;
+	end process;
+
+	clk_fast_gen: process
+	begin
+		clk_fast <= '0';
+		wait for clk_fast_Period/2;
+		clk_fast <= '1';
+		wait for clk_fast_Period/2;
+	end process;
+
 	--  This process does the real job.
-	process
-
-		type pattern_type is record
-
-			--  The inputs of the adder.
-			i0, i1, ci : bit;
-
-			--  The expected outputs of the adder.
-			s, co : bit;
-
-		end record;
-
-		--  The patterns to apply.
-
-		type pattern_array is array (natural range <>) of pattern_type;
-
-		constant patterns : pattern_array := (
-
-			('0', '0', '0', '0', '0'),
-			('0', '0', '1', '1', '0'),
-			('0', '1', '0', '1', '0'),
-			('0', '1', '1', '0', '1'),
-			('1', '0', '0', '1', '0'),
-			('1', '0', '1', '0', '1'),
-			('1', '1', '0', '0', '1'),
-			('1', '1', '1', '1', '1')
-
-		);
+	stimuli: process
 
 	begin
 
-		--  Check each pattern.
-		for i in patterns'range loop
+		wait for 100 ns;
 
-			--  Set the inputs.
-			i0 <= patterns(i).i0;
-			i1 <= patterns(i).i1;
-			ci <= patterns(i).ci;
-
-			--  Wait for the results.
-			wait for 1 ns;
-
-			--  Check the outputs.
-			assert s = patterns(i).s
-				report "bad sum value" severity error;
-
-			assert co = patterns(i).co
-				report "bad carry out value" severity error;
-
-		end loop;
+		length <= 20;
 
 		assert false report "end of test" severity note;
 
@@ -102,6 +81,6 @@ begin
 
 	end process;
 
-end behav;
+end beh;
 --
 -------------------------------------------------------------------------------

@@ -12,30 +12,25 @@ use ieee.numeric_std.all;
 --
 entity prng is
 
-	-- `length`, 'clk_slow', 'clock_fast',  'reset', 'mode', 'start' are the inputs of trng entity.
-	-- `seed' is the output of the entitiy.
+	-- `seed`, 'length'  are the inputs of trng entity.
+	-- `rndnumb' is the output of the entitiy.
 
 	port (
-		length: in unsigned integer;
-		clk_slow: in std_logic;
-		cl_fast: in std_logic;
-		reset: in std_logic;
-		mode: in std_logic;
-		start: in std_logic;
-		seed: out unsigned integer
+		length: in integer;
+		-- length of the vectors 1024
+		seed: in std_logic_vector(1023 downto 0);
+		rndnumb: out std_logic_vector(1023 downto 0);
 	);
 
 end prng;
 --
 -------------------------------------------------------------------------------
 --
-architecture behavioral of prng is
-
-	signal seed: unsigned integer;
-
+architecture beh of prng is
+	constant M: integer := 4;
 begin
 
 
-end prng;
+end beh;
 --
 -------------------------------------------------------------------------------
