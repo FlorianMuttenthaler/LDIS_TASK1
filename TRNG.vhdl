@@ -44,6 +44,7 @@ begin
 
 	begin
 		if i = (length -1) then
+			i <= 0;
 			seed <= seed_array;
 		end if;
 	end process;

@@ -9,6 +9,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use work.trng_pkg.all;
+
 
 --  A testbench has no ports.
 entity trng_tb is
@@ -72,7 +74,7 @@ begin
 
 		wait for 100 ns;
 
-		length <= 20;
+		length <= 5;
 
 		assert false report "end of test" severity note;
 
