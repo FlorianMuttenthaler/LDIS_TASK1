@@ -9,7 +9,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.trng_pkg.all;
+use work.TRNG_pkg.all;
 
 
 --  A testbench has no ports.
@@ -21,10 +21,10 @@ end trng_tb;
 architecture beh of trng_tb is
 
 	--  Specifies which entity is bound with the component.
-	for trng_0: trng use entity work.trng;		
+	for trng_0: trng use entity work.trng;	
 
-	constant LEN : integer := 5; -- Anzahl von Bits
-	constant clk_slow_Period : time := 20 ns; --50kHz
+	constant LEN : integer := 10; -- Anzahl von Bits
+	constant clk_slow_Period : time := 19.5 ns; --50kHz
 	constant clk_fast_Period : time := 1 ns;  --1MHz
 	
 	signal clk_slow: std_logic;	
@@ -33,7 +33,7 @@ architecture beh of trng_tb is
 begin
 
 	--  Component instantiation.
-	trng_0: entity work.trng
+	trng_0: trng
 		generic map(
 			LEN => LEN
 		)
@@ -49,7 +49,7 @@ begin
 		clk_slow <= '0';
 		wait for clk_slow_Period/2;
 		clk_slow <= '1';
-		wait for clk_slow_Period/2;
+		wait for clk_fast_Period/2;
 	end process clk_slow_gen;
 
 	clk_fast_gen: process
@@ -66,8 +66,6 @@ begin
 	begin
 
 		wait for 100 ns;
-
-		length <= 5;
 
 		assert false report "end of test" severity note;
 

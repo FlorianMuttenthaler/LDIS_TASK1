@@ -17,7 +17,7 @@ entity trng is
 	-- 'seed' is the output of the entity.
 
 	generic(
-		LEN : integer; -- Anzahl von Bits
+		LEN : integer -- Anzahl von Bits
 	);
 	
 	port (
@@ -35,23 +35,20 @@ architecture beh of trng is
 	signal i: integer := 0;
 	signal seed_array:std_logic_vector((LEN - 1) downto 0) := (others => '0');
 begin
-	sample_proc:process(clk_slow)
+	trng_proc:process(clk_slow)
 		
 	begin
 		if rising_edge(clk_slow) then
+			
 			seed_array(i) <= clk_fast;
-			i <= i + 1;
+			if i = (LEN - 1) then
+				i <= 0;
+				seed <= seed_array;
+			else
+				i <= i + 1;
+			end if;
 		end if;
-	end process sample_proc;
-
-	push_proc:process(i)
-
-	begin
-		if i = (LEN - 1) then
-			i <= 0;
-			seed <= seed_array;
-		end if;
-	end process push_proc;
+	end process trng_proc;
 
 
 end beh;

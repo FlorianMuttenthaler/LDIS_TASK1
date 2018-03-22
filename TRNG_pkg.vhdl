@@ -19,7 +19,7 @@ package trng_pkg is
 		-- 'seed' is the output of the entity.
 
 		generic(
-			LEN : integer; -- Anzahl von Bits
+			LEN : integer -- Anzahl von Bits
 		);
 		
 		port (
