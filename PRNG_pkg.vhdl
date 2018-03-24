@@ -19,15 +19,15 @@ package prng_pkg is
 		-- 'rndnumb' is the output of the entity.
 		
 		generic(
-			LEN : integer -- Anzahl von Bits
+			LEN : integer := 5 -- Anzahl von Bits, DEFAULT = 5
 		);
 		
 		port (
 			seed: in std_logic_vector((LEN - 1) downto 0);
-			rndnumb: out std_logic_vector((LEN - 1) downto 0);
+			rndnumb: out std_logic_vector((LEN - 1) downto 0)
 		);
 	
-	end component trng;
+	end component prng;
 	
-end trng_pkg;
+end prng_pkg;
 

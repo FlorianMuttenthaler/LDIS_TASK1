@@ -30,6 +30,7 @@ architecture beh of trng_tb is
 	signal clk_slow: std_logic;	
 	signal clk_fast: std_logic;
 	signal seed: std_logic_vector((LEN - 1) downto 0);
+	
 begin
 
 	--  Component instantiation.
@@ -44,24 +45,30 @@ begin
 			seed => seed
 		);
 
-	clk_slow_gen: process
+	clk_slow_gen : process
+	
 	begin
+	
 		clk_slow <= '0';
 		wait for clk_slow_Period/2;
 		clk_slow <= '1';
 		wait for clk_fast_Period/2;
+		
 	end process clk_slow_gen;
 
-	clk_fast_gen: process
+	clk_fast_gen : process
+	
 	begin
+	
 		clk_fast <= '0';
 		wait for clk_fast_Period/2;
 		clk_fast <= '1';
 		wait for clk_fast_Period/2;
+		
 	end process clk_fast_gen;
 
 	--  This process does the real job.
-	stimuli: process
+	stimuli : process
 
 	begin
 

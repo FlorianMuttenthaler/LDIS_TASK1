@@ -34,10 +34,13 @@ end trng;
 architecture beh of trng is
 	signal i: integer := 0;
 	signal seed_array:std_logic_vector((LEN - 1) downto 0) := (others => '0');
+	
 begin
-	trng_proc:process(clk_slow)
+
+	trng_proc : process(clk_slow)
 		
 	begin
+	
 		if rising_edge(clk_slow) then
 			
 			seed_array(i) <= clk_fast;
@@ -48,6 +51,7 @@ begin
 				i <= i + 1;
 			end if;
 		end if;
+		
 	end process trng_proc;
 
 

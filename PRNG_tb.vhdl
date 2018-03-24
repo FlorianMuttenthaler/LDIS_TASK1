@@ -27,6 +27,7 @@ architecture beh of prng_tb is
 	
 	signal seed: std_logic_vector((LEN - 1) downto 0);
 	signal rndnumb: std_logic_vector((LEN - 1) downto 0);
+	
 begin
 
 	--  Component instantiation.
@@ -41,7 +42,7 @@ begin
 		);
 
 	--  This process does the real job.
-	stimuli: process
+	stimuli : process
 
 	begin
 
