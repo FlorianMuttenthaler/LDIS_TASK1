@@ -17,7 +17,7 @@ entity trng is
 	-- 'seed' is the output of the entity.
 
 	generic(
-		LEN : integer -- Anzahl von Bits
+		LEN : integer := 128 -- Anzahl von Bits, DEFAULT = 128
 	);
 	
 	port (

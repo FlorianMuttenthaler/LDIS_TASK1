@@ -19,7 +19,7 @@ package prng_pkg is
 		-- 'rndnumb' is the output of the entity.
 		
 		generic(
-			LEN : integer := 5 -- Anzahl von Bits, DEFAULT = 5
+			LEN : integer := 128 -- Anzahl von Bits, DEFAULT = 128
 		);
 		
 		port (

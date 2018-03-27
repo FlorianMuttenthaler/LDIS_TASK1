@@ -18,7 +18,7 @@ architecture behav of rng_tb is
   		port (
 			length, x,y: in unsigned integer;
 			clk_fast, reset, mode, start: in std_logic;	
-			rndnumber: out unsigned integer;
+			rndnumb: out unsigned integer;
 		);
 
 	end component;
