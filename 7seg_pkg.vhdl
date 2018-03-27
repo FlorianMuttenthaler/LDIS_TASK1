@@ -10,7 +10,7 @@ use ieee.numeric_std.all;
 --
 -------------------------------------------------------------------------------
 --
-package 7seg_pkg is
+package sevenseg_pkg is
 
 	component sevenseg is
 
@@ -25,11 +25,11 @@ package 7seg_pkg is
 		port (
 			rndnumb: in std_logic_vector((LEN - 1) downto 0);
 			--clk			: in std_logic;
-			segment7	: out std_logic_vector(6 downto 0)  -- 7 bit decoded output.
+			segment7	: out std_logic_vector(6 downto 0);  -- 7 bit decoded output.
 			anode		: out std_logic_vector(7 downto 0)  -- 8 bit output for anodes.
 		);
 	
 	end component sevenseg;
 	
-end 7seg_pkg;
+end sevenseg_pkg;
 

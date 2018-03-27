@@ -9,7 +9,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.7seg_pkg.all;
+use work.sevenseg_pkg.all;
 
 
 --  A testbench has no ports.
@@ -25,9 +25,9 @@ architecture beh of sevenseg_tb is
 
 	constant LEN : integer := 10; -- Anzahl von Bits
 	
-	rndnumb: std_logic_vector((LEN - 1) downto 0);
-	segment7: std_logic_vector(6 downto 0)  
-	anode: std_logic_vector(7 downto 0)
+	signal rndnumb: std_logic_vector((LEN - 1) downto 0);
+	signal segment7: std_logic_vector(6 downto 0);  
+	signal anode: std_logic_vector(7 downto 0);
 
 begin
 
