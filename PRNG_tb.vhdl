@@ -45,8 +45,19 @@ begin
 	stimuli : process
 
 	begin
+		wait for 100 ns;
+
+		seed <= "0001000011"; -- 67
+		
+		wait for 100 ns;
+
+		assert rndnumb = "1010101010" report "correct calculation" severity note; --682
+
+		seed <= "0010011010"; --154
 
 		wait for 100 ns;
+
+		assert rndnumb = "1010101010" report "rndnumb not changed because of invalid seed" severity note;
 
 		assert false report "end of test" severity note;
 

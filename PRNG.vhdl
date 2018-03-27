@@ -32,12 +32,12 @@ end prng;
 architecture beh of prng is
 	constant M: integer := 77; -- M = p * q, p&q sind Primzahlen, p%4 = q%4 = 3, p = 7, q = 11
 	
-	signal seed_valid: integer;
+	signal seed_valid: integer := 0;
 	
 begin
 
 	seed_valid_proc : process(seed)
-		variable modulus: integer;
+		variable modulus: integer := 0;
 		variable seed_temp: integer := 0;
 		variable swap: integer := 0;
 		
@@ -45,30 +45,29 @@ begin
 	
 		modulus := M;
 		seed_temp := to_integer(unsigned(seed));
-		
-		seed_temp := seed_temp - modulus;
-		
-		if seed_temp = 1 then 
-			seed_valid <= seed_temp;
-		elsif seed_temp = 0 then
-			--seed_temp := to_integer(unsigned(seed));
-		elsif seed_temp < 0 then
-			seed_temp := seed_temp + modulus;	
-			swap := seed_temp;
-			seed_temp := modulus;
-			modulus := swap;
+
+		while seed_temp /= modulus loop
+			if seed_temp > modulus then
+				seed_temp := seed_temp - modulus;
+			else
+				modulus := modulus - seed_temp;
+			end if;
+		end loop;
+
+		if seed_temp = 1 then
+			seed_valid <= to_integer(unsigned(seed));
 		end if;
 	
 	end process seed_valid_proc;
 
 	bbs_proc : process(seed_valid)
 --		variable i: integer := 0; -- Laufindex für while
-		variable x: integer;
+		variable x: integer := 0;
 		variable temp: integer := 0;
-		variable temp_vec: std_logic_vector((LEN - 1) downto 0);
+		variable temp_vec: std_logic_vector((LEN - 1) downto 0) := (others => '0');
 		variable bit_i: std_logic := '0';
 		variable parity_v: std_logic := '0';
-		variable rndnumb_temp: std_logic_vector((LEN - 1) downto 0);
+		variable rndnumb_temp: std_logic_vector((LEN - 1) downto 0) := (others => '0');
 		
 	begin
 	
