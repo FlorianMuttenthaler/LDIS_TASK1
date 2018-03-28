@@ -49,16 +49,16 @@ architecture behavioral of sevenseg is
 	
 		case bcd is
 			--------------------------abcdefg----------
-			when "0000"=> return "00000011";  -- '0'
-			when "0001"=> return "10011111";  -- '1'
-			when "0010"=> return "00100101";  -- '2'
-			when "0011"=> return "00001101";  -- '3'
-			when "0100"=> return "10011001";  -- '4'
-			when "0101"=> return "01001001";  -- '5'
-			when "0110"=> return "01000001";  -- '6'
-			when "0111"=> return "00011111";  -- '7'
-			when "1000"=> return "00000001";  -- '8'
-			when "1001"=> return "00001001";  -- '9'
+			when "0000"=> return "00000011"; -- '0'
+			when "0001"=> return "10011111"; -- '1'
+			when "0010"=> return "00100101"; -- '2'
+			when "0011"=> return "00001101"; -- '3'
+			when "0100"=> return "10011001"; -- '4'
+			when "0101"=> return "01001001"; -- '5'
+			when "0110"=> return "01000001"; -- '6'
+			when "0111"=> return "00011111"; -- '7'
+			when "1000"=> return "00000001"; -- '8'
+			when "1001"=> return "00001001"; -- '9'
 			when "1010"=> return "00010000"; -- 'A'
 			when "1011"=> return "00000000"; -- 'B'
 			when "1100"=> return "01100010"; -- 'C'
@@ -77,12 +77,22 @@ architecture behavioral of sevenseg is
 begin
 
 	bcd_proc: process (en_new_numb)
-		
+		variable rndnumb_temp:std_logic_vector(32 downto 0) := (others => '0');
+		variable length_min:integer := 0;
 	begin
-		if en_new_numb = '1' then 
-			for j in anode'range loop
+		if en_new_numb = '1' then
+			if LEN < rndnumb_temp'length then
+				length_min := LEN;
+			else
+				length_min := rndnumb_temp'length;
+			end if;
+			for k in 0 to length_min loop
+				rndnumb_temp(k) := rndnumb(k);
+			end loop;
+			
+			for j in 0 to 7 loop
 				for i in 0 to 3 loop
-					array_seg(j)(i) <= rndnumb(i + 4 * j);
+					array_seg(j)(i) <= rndnumb_temp(i + 4 * j);
 				end loop;
 			end loop;
 		end if;		
@@ -127,7 +137,7 @@ begin
 					anode <= "00000000";
 					segment7 <= "11111111";
 			end case;
-			if digit < 8 then
+			if digit < 7 then
 				digit <= digit + 1;
 			else
 				digit <= 0;

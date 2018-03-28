@@ -46,7 +46,7 @@ begin
 		seed_temp := to_integer(unsigned(seed));
 
 		if seed_temp /= 0 then -- Falls seed = 0 Algorithmus überspringen
-			while seed_temp /= modulus loop -- Algorithmus Größter gemeinsamer Teiler
+			while seed_temp /= modulus loop -- Algorithmus Grösster gemeinsamer Teiler
 				if seed_temp > modulus then
 					seed_temp := seed_temp - modulus;
 				else
@@ -55,7 +55,7 @@ begin
 			end loop;
 		end if;
 
-		if seed_temp = 1 then -- Größter gemeinsamer Teiler ist 1 = teilerfremd
+		if seed_temp = 1 then -- Grösster gemeinsamer Teiler ist 1 = teilerfremd
 			seed_valid <= to_integer(unsigned(seed)); -- seed wird für weitere Berechnung weiter gereicht
 		end if;
 	
