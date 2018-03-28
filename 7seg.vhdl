@@ -22,9 +22,10 @@ entity sevenseg is
 		);
 		
 	port (
-		rndnumb: in std_logic_vector((LEN - 1) downto 0);
-		--clk			: in std_logic;
-		segment7	: out std_logic_vector(6 downto 0);  -- 7 bit decoded output.
+		rndnumb		: in std_logic_vector((LEN - 1) downto 0);
+		clk		: in std_logic;
+		en_new_numb	: in std_logic;	-- New rndnumb to display			
+		segment7	: out std_logic_vector(7 downto 0);  -- 8 bit decoded output.
 		anode		: out std_logic_vector(7 downto 0)  -- 8 bit output for anodes.
 	);
 
@@ -48,16 +49,16 @@ architecture behavioral of sevenseg is
 	
 		case bcd is
 			--------------------------abcdefg----------
-			when "0000"=> return "0000001";  -- '0'
-			when "0001"=> return "1001111";  -- '1'
-			when "0010"=> return "0010010";  -- '2'
-			when "0011"=> return "0000110";  -- '3'
-			when "0100"=> return "1001100";  -- '4'
-			when "0101"=> return "0100100";  -- '5'
-			when "0110"=> return "0100000";  -- '6'
-			when "0111"=> return "0001111";  -- '7'
-			when "1000"=> return "0000000";  -- '8'
-			when "1001"=> return "0000100";  -- '9'
+			when "0000"=> return "00000011";  -- '0'
+			when "0001"=> return "10011111";  -- '1'
+			when "0010"=> return "00100101";  -- '2'
+			when "0011"=> return "00001101";  -- '3'
+			when "0100"=> return "10011001";  -- '4'
+			when "0101"=> return "01001001";  -- '5'
+			when "0110"=> return "01000001";  -- '6'
+			when "0111"=> return "00011111";  -- '7'
+			when "1000"=> return "00000001";  -- '8'
+			when "1001"=> return "00001001";  -- '9'
 			when "1010"=> return "00010000"; -- 'A'
 			when "1011"=> return "00000000"; -- 'B'
 			when "1100"=> return "01100010"; -- 'C'
@@ -66,7 +67,7 @@ architecture behavioral of sevenseg is
 			when "1111"=> return "01110000"; -- 'F'
 			
 			--nothing is displayed when a number more than F is given as input.
-			when others=> return "1111111";
+			when others=> return "11111111";
 
 		end case;
 		
@@ -75,63 +76,62 @@ architecture behavioral of sevenseg is
 
 begin
 
-	bcd_proc: process (rndnumb)
+	bcd_proc: process (en_new_numb)
 		
 	begin
-
-		for j in anode'range loop
-			
-			for i in 0 to 3 loop
-				array_seg(j)(i) <= rndnumb(i + 4 * j);
+		if en_new_numb = '1' then 
+			for j in anode'range loop
+				for i in 0 to 3 loop
+					array_seg(j)(i) <= rndnumb(i + 4 * j);
+				end loop;
 			end loop;
-			
-		end loop;
-		
-		digit <= 0;
-		
+		end if;		
 
 	end process bcd_proc;
 	
-	write_proc: process (digit)
+	write_proc: process (clk)
 		variable segment_temp:std_logic_vector(3 downto 0) := (others => '0');
 	begin
-		for i in segment_temp'range loop
-			segment_temp(i) := array_seg(digit)(i);
-		end loop;
+		if rising_edge(clk) then
 			
-		case digit is
-			when 0 => 
-				anode <= "00000001";
-				segment7 <= bcd_to_7seg(segment_temp);
-			when 1 => 
-				anode <= "00000010";
-				segment7 <= bcd_to_7seg(segment_temp);
-			when 2 => 
-				anode <= "00000100";
-				segment7 <= bcd_to_7seg(segment_temp);
-			when 3 => 
-				anode <= "00001000";
-				segment7 <= bcd_to_7seg(segment_temp);
-			when 4 => 
-				anode <= "00010000";
-				segment7 <= bcd_to_7seg(segment_temp);
-			when 5 => 
-				anode <= "00100000";
-				segment7 <= bcd_to_7seg(segment_temp);
-			when 6 => 
-				anode <= "01000000";
-				segment7 <= bcd_to_7seg(segment_temp);
-			when 7 => 
-				anode <= "10000000";
-				segment7 <= bcd_to_7seg(segment_temp);
-			when others =>
-				anode <= "00000000";
-				segment7 <= "1111111";
-		end case;
-		if digit < 8 then
-			digit <= digit + 1;
-		else
-			digit <= 0;
+			for i in segment_temp'range loop
+				segment_temp(i) := array_seg(digit)(i);
+			end loop;
+			
+			case digit is
+				when 0 => 
+					anode <= "00000001";
+					segment7 <= bcd_to_7seg(segment_temp);
+				when 1 => 
+					anode <= "00000010";
+					segment7 <= bcd_to_7seg(segment_temp);
+				when 2 => 
+					anode <= "00000100";
+					segment7 <= bcd_to_7seg(segment_temp);
+				when 3 => 
+					anode <= "00001000";
+					segment7 <= bcd_to_7seg(segment_temp);
+				when 4 => 
+					anode <= "00010000";
+					segment7 <= bcd_to_7seg(segment_temp);
+				when 5 => 
+					anode <= "00100000";
+					segment7 <= bcd_to_7seg(segment_temp);
+				when 6 => 
+					anode <= "01000000";
+					segment7 <= bcd_to_7seg(segment_temp);
+				when 7 => 
+					anode <= "10000000";
+					segment7 <= bcd_to_7seg(segment_temp);
+				when others =>
+					anode <= "00000000";
+					segment7 <= "11111111";
+			end case;
+			if digit < 8 then
+				digit <= digit + 1;
+			else
+				digit <= 0;
+			end if;
 		end if;
 	end process write_proc;
 	
