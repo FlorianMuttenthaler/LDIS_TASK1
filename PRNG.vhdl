@@ -17,7 +17,7 @@ entity prng is
 	-- 'rndnumb' is the output of the entity.
 	
 	generic(
-		LEN : integer := 128 -- Anzahl von Bits, DEFAULT = 128
+		LEN: integer := 128 -- Anzahl von Bits, DEFAULT = 128
 	);
 	
 	port (
@@ -39,23 +39,24 @@ begin
 	seed_valid_proc : process(seed)
 		variable modulus: integer := 0;
 		variable seed_temp: integer := 0;
-		variable swap: integer := 0;
-		
+
 	begin
 	
-		modulus := M;
+		modulus := M; -- Kopie erstellen
 		seed_temp := to_integer(unsigned(seed));
 
-		while seed_temp /= modulus loop
-			if seed_temp > modulus then
-				seed_temp := seed_temp - modulus;
-			else
-				modulus := modulus - seed_temp;
-			end if;
-		end loop;
+		if seed_temp /= 0 then -- Falls seed = 0 Algorithmus überspringen
+			while seed_temp /= modulus loop -- Algorithmus Größter gemeinsamer Teiler
+				if seed_temp > modulus then
+					seed_temp := seed_temp - modulus;
+				else
+					modulus := modulus - seed_temp;
+				end if;
+			end loop;
+		end if;
 
-		if seed_temp = 1 then
-			seed_valid <= to_integer(unsigned(seed));
+		if seed_temp = 1 then -- Größter gemeinsamer Teiler ist 1 = teilerfremd
+			seed_valid <= to_integer(unsigned(seed)); -- seed wird für weitere Berechnung weiter gereicht
 		end if;
 	
 	end process seed_valid_proc;

@@ -25,7 +25,7 @@ architecture beh of prng_tb is
 
 	constant LEN : integer := 10; -- Anzahl von Bits
 	
-	signal seed: std_logic_vector((LEN - 1) downto 0);
+	signal seed: std_logic_vector((LEN - 1) downto 0) := (others => '0');
 	signal rndnumb: std_logic_vector((LEN - 1) downto 0);
 	
 begin
