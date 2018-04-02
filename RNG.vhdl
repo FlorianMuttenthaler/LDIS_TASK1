@@ -28,18 +28,17 @@ entity rng is
 		);
 		
 	port (
-		R2: in std_logic;
+		R2		: in std_logic;
 		clk_fast: in std_logic;
-		reset: in std_logic;
-		mode: in std_logic;
-		start: in std_logic;
-		R1: out std_logic;
-		X: out std_logic;
-		rndnumb: out std_logic_vector((LEN - 1) downto 0);
+		reset	: in std_logic;
+		mode	: in std_logic;
+		start	: in std_logic;
+		R1		: out std_logic;
+		X		: out std_logic;
+		rndnumb	: out std_logic_vector((LEN - 1) downto 0);
 		segment7: out std_logic_vector(7 downto 0)
-		UART_RX : in std_logic;
+		--UART_RX : in std_logic;
 		UART_TX : out std_logic;
-		LED     : out std_logic_vector(7 downto 0)
 	);
 
 end rng;
@@ -52,13 +51,12 @@ architecture behavioral of rng is
 	constant BAUDRATE    : integer := 9600;
 	constant TEST_RUNS	 : integer := 100000;
 
-	signal data_recv     : std_logic_vector(7 downto 0);
-	signal data_recv_new : std_logic;
-	signal rdy_trans     : std_logic;
+	-- signal data_recv     : std_logic_vector(7 downto 0);
+	-- signal data_recv_new : std_logic;
+	-- signal rdy_trans     : std_logic;
 
 	signal send_trans, send_trans_next  : std_logic;
 	signal data_trans, data_trans_next  : std_logic_vector(7 downto 0);
-	signal led_int, led_int_next        : std_logic_vector(7 downto 0);
 
 	signal clk_slow: std_logic;
 	signal seed: std_logic_vector((LEN - 1) downto 0);
@@ -104,19 +102,19 @@ begin
 			rndnumb => rndnumb
 		);
 		
-	uart_recv : entity work.uart_rx
-		generic map(
-			CLK_FREQ => CLK_FREQ,
-			BAUDRATE => BAUDRATE
-		)
+	-- uart_recv : entity work.uart_rx
+		-- generic map(
+			-- CLK_FREQ => CLK_FREQ,
+			-- BAUDRATE => BAUDRATE
+		-- )
 
-		port map(
-			clk      => clk_fast,
-			rst      => reset,
-			rx       => UART_RX,
-			data     => data_recv,
-			data_new => data_recv_new
-		);
+		-- port map(
+			-- clk      => clk_fast,
+			-- rst      => reset,
+			-- rx       => UART_RX,
+			-- data     => data_recv,
+			-- data_new => data_recv_new
+		-- );
 		
 	uart_trans : entity work.uart_tx
 		generic map(
@@ -132,8 +130,6 @@ begin
 			rdy   => rdy_trans,
 			tx    => UART_TX
 		);
-		
-	LED <= led_int;
 
 	sync: process (clk_fast, reset)
 	begin
@@ -141,14 +137,12 @@ begin
 		if(reset = '1') then		
 			send_trans <= '0';
 			data_trans <= (others => '0');
-			led_int    <= (others => '0');	
 			test_fin   := 0;			
 			state      <= STATE_IDLE;
 
 		elsif(rising_edge(clk_fast)) then		
 			send_trans <= send_trans_next;
-			data_trans <= data_trans_next;
-			led_int    <= led_int_next;			
+			data_trans <= data_trans_next;		
 			state      <= state_next;
 
 		end if;
@@ -161,7 +155,6 @@ begin
 		-- prevent latches
 		send_trans_next <= send_trans;
 		data_trans_next <= data_trans;
-		led_int_next    <= led_int;
 		state_next      <= state;
 
 		case state is
@@ -180,12 +173,28 @@ begin
 						null;
 					else
 						for i in 0 to (TEST_RUNS - 1) loop
-						-- UART rndnumb senden
-						-- if(rdy_trans = '1') then
-							-- data_trans_next <= data_recv;
+						
+							-- Abfrage ob neue rndnumb vorhanden
+							-- rnd_valid gehört noch implementiert
+							while rnd_valid = '0' loop
+								null;
+							end loop;
+							
+							-- UART rndnumb senden
+							for j in 0 to (LEN - 1) loop
+								if rndnumb(j) = '1' then
+									data_trans_next <= "0110001"; -- ASCII-Code: 1
+									send_trans_next <= '1';
+								else
+									data_trans_next <= "0110000"; -- ASCII-Code: 0
+									send_trans_next <= '1';
+								end if;
+								data_trans_next <= "0110000"; -- ASCII-Code: 0
+								send_trans_next <= '1';
+							end loop;
+							-- Eventuell gehört ein Leerzeichen nach jedem Bit eingefügt
+							-- data_trans_next <= "0100000"; -- ASCII-Code: Leerzeichen
 							-- send_trans_next <= '1';
-							-- state_next      <= STATE_READY_RECV;
-						-- end if;
 						end loop;
 						
 						test_fin := '1';
@@ -196,11 +205,18 @@ begin
 					
 					if start = '1' then
 					
-						-- if(rdy_trans = '1') then
-							-- data_trans_next <= data_recv;
-							-- send_trans_next <= '1';
-							-- state_next      <= STATE_READY_RECV;
-						-- end if;
+						-- UART rndnumb senden
+						for j in 0 to (LEN - 1) loop
+							if rndnumb(j) = '1' then
+								data_trans_next <= 49; -- ASCII-Code: 1
+								send_trans_next <= '1';
+							else
+								data_trans_next <= 48; -- ASCII-Code: 0
+								send_trans_next <= '1';
+							end if;
+						end loop;
+						data_trans_next <= 10; -- ASCII-Code: Line Feed
+						send_trans_next <= '1';
 					end if;
 					
 				when others =>
@@ -209,8 +225,6 @@ begin
 			end case;
 
 	end process state_out;
-	
-	
 	
 end rng;
 --
