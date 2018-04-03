@@ -22,8 +22,7 @@ entity prng is
 	
 	port (
 		seed: in std_logic_vector((LEN - 1) downto 0);
-		rndnumb: out std_logic_vector((LEN - 1) downto 0);
-		rnd_valid: out std_logic
+		rndnumb: out std_logic_vector((LEN - 1) downto 0)
 	);
 
 end prng;
@@ -34,7 +33,29 @@ architecture beh of prng is
 	constant M: integer := 77; -- M = p * q, p&q sind Primzahlen, p%4 = q%4 = 3, p = 7, q = 11
 	
 	signal seed_valid: integer := 0;
-	
+
+	function gcd_sub (modulus, seed_temp : integer) return integer is
+		variable swap:integer := 0;
+		variable modu:integer := 0;
+		variable temp:integer := 0;
+	begin
+		temp := seed_temp;
+		modu := modulus;
+		temp := temp - modu;
+		if temp = 1 then
+			return 1;
+		end if;
+		if temp = 0 then
+			return 0;
+		end if;
+		if temp < 0 then
+			temp := temp + modu;
+		end if;
+			swap := temp;
+			temp := modu;
+			modu := swap;
+			return gcd_sub(modu, temp);
+	end gcd_sub;
 begin
 
 	seed_valid_proc : process(seed)
@@ -42,23 +63,25 @@ begin
 		variable seed_temp: integer := 0;
 
 	begin
-		rnd_valid <= '0';
 		modulus := M; -- Kopie erstellen
 		seed_temp := to_integer(unsigned(seed));
 
 		if seed_temp /= 0 then -- Falls seed = 0 Algorithmus überspringen
-			while seed_temp /= modulus loop -- Algorithmus Grösster gemeinsamer Teiler
-				if seed_temp > modulus then
-					seed_temp := seed_temp - modulus;
-				else
-					modulus := modulus - seed_temp;
-				end if;
-			end loop;
+--			while seed_temp /= modulus loop -- Algorithmus Grösster gemeinsamer Teiler
+--				if seed_temp > modulus then
+--					seed_temp := seed_temp - modulus;
+--				else
+--					modulus := modulus - seed_temp;
+--				end if;
+--			end loop;
+			if gcd_sub(modulus, seed_temp) = 1 then
+				seed_valid <= to_integer(unsigned(seed)); -- seed wird für weitere Berechnung weiter gereicht
+			end if;
 		end if;
 
-		if seed_temp = 1 then -- Grösster gemeinsamer Teiler ist 1 = teilerfremd
-			seed_valid <= to_integer(unsigned(seed)); -- seed wird für weitere Berechnung weiter gereicht
-		end if;
+--		if seed_temp = 1 then -- Grösster gemeinsamer Teiler ist 1 = teilerfremd
+--			seed_valid <= to_integer(unsigned(seed)); -- seed wird für weitere Berechnung weiter gereicht
+--		end if;
 	
 	end process seed_valid_proc;
 
@@ -116,8 +139,7 @@ begin
 --			rndnumb_temp(LEN - 1) := '0'; -- Letzten Wert setzen, da LEN ungerade
 --		end if;
 	
-		rndnumb <= rndnumb_temp; -- Zufallszahl ausgeben
-		rnd_valid <= '1';		
+		rndnumb <= rndnumb_temp; -- Zufallszahl ausgeben	
 	end process bbs_proc;
 	
 end beh;

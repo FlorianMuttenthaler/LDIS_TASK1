@@ -46,7 +46,7 @@ end rng;
 --
 -------------------------------------------------------------------------------
 --
-architecture behavioral of rng is
+architecture beh of rng is
 
 	constant CLK_FREQ    : integer := 100E6;
 	constant BAUDRATE    : integer := 9600;
@@ -152,7 +152,12 @@ begin
 			tx    => UART_TX
 		);
 
-	sync: process (clk_fast, reset)
+	rnd_valid_proc: process(rndnumb)
+	begin
+		rnd_valid <= '1';
+	end process rnd_valid_proc;		
+	
+	sync_proc: process (clk_fast, reset)
 	begin
 
 		if(reset = '1') then		
@@ -169,9 +174,9 @@ begin
 
 		end if;
 
-	end process sync;
+	end process sync_proc;
 	
-	state_out: process (state, mode)
+	state_out_proc: process (state, mode)
 	begin
 
 		-- prevent latches
@@ -198,7 +203,6 @@ begin
 						for i in 0 to (TEST_RUNS - 1) loop
 						
 							-- Abfrage ob neue rndnumb vorhanden
-							-- rnd_valid gehört noch implementiert
 							while rnd_valid = '0' loop
 								null;
 							end loop;
@@ -218,6 +222,7 @@ begin
 							end loop;
 							data_trans_next <= "00001010"; -- ASCII-Code: 10: Line Feed
 							send_trans_next <= '1';
+							rnd_valid <= '0';
 						end loop;
 						
 						test_fin <= '1';
@@ -250,8 +255,8 @@ begin
 
 			end case;
 
-	end process state_out;
+	end process state_out_proc;
 	
-end rng;
+end beh;
 --
 -------------------------------------------------------------------------------

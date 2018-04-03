@@ -27,7 +27,6 @@ architecture beh of prng_tb is
 	
 	signal seed: std_logic_vector((LEN - 1) downto 0) := (others => '0');
 	signal rndnumb: std_logic_vector((LEN - 1) downto 0);
-	signal rnd_valid: std_logic;
 begin
 
 	--  Component instantiation.
@@ -38,8 +37,7 @@ begin
 			
 		port map (
 			seed => seed,
-			rndnumb => rndnumb,
-			rnd_valid => rnd_valid
+			rndnumb => rndnumb
 		);
 
 	--  This process does the real job.
