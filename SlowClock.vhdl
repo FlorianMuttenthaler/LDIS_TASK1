@@ -27,8 +27,8 @@ end slowclk;
 --
 -------------------------------------------------------------------------------
 --
-architecture behavioral of slowclk is
-	signal temp: std_logic := 0; 
+architecture beh of slowclk is
+	signal temp: std_logic := '0'; 
 
 begin
 	
@@ -57,6 +57,6 @@ begin
 	
 	end process Buf_R2_proc;
 	
-end slowclk;
+end beh;
 --
 -------------------------------------------------------------------------------

@@ -22,7 +22,8 @@ entity prng is
 	
 	port (
 		seed: in std_logic_vector((LEN - 1) downto 0);
-		rndnumb: out std_logic_vector((LEN - 1) downto 0)
+		rndnumb: out std_logic_vector((LEN - 1) downto 0);
+		rnd_valid: out std_logic
 	);
 
 end prng;
@@ -41,7 +42,7 @@ begin
 		variable seed_temp: integer := 0;
 
 	begin
-	
+		rnd_valid <= '0';
 		modulus := M; -- Kopie erstellen
 		seed_temp := to_integer(unsigned(seed));
 
@@ -116,7 +117,7 @@ begin
 --		end if;
 	
 		rndnumb <= rndnumb_temp; -- Zufallszahl ausgeben
-		
+		rnd_valid <= '1';		
 	end process bbs_proc;
 	
 end beh;

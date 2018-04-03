@@ -88,6 +88,7 @@ begin
 		wait for 2 ns;
 		en_new_numb <= '0';
 
+		wait for 20 ns;
 
 		assert false report "end of test" severity failure;
 

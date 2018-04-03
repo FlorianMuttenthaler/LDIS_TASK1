@@ -10,10 +10,11 @@ use ieee.numeric_std.all;
 
 use work.TRNG_pkg.all;
 use work.PRNG_pkg.all;
-use work.SlowClock_pkg.all;
+use work.slowclk_pkg.all;
+use work.sevenseg_pkg.all;
 
 use work.uart_tx_pkg.all;
-use work.uart_rx_pkg.all;
+--use work.uart_rx_pkg.all;
 --
 -------------------------------------------------------------------------------
 --
@@ -35,10 +36,10 @@ entity rng is
 		start	: in std_logic;
 		R1		: out std_logic;
 		X		: out std_logic;
-		rndnumb	: out std_logic_vector((LEN - 1) downto 0);
-		segment7: out std_logic_vector(7 downto 0)
+		segment7: out std_logic_vector(7 downto 0);
+		anode 	: out std_logic_vector(7 downto 0);
 		--UART_RX : in std_logic;
-		UART_TX : out std_logic;
+		UART_TX : out std_logic
 	);
 
 end rng;
@@ -50,18 +51,25 @@ architecture behavioral of rng is
 	constant CLK_FREQ    : integer := 100E6;
 	constant BAUDRATE    : integer := 9600;
 	constant TEST_RUNS	 : integer := 100000;
+	
+	signal RDY		 : std_logic := '1';
+
+	signal rnd_valid : std_logic := '0';
 
 	-- signal data_recv     : std_logic_vector(7 downto 0);
 	-- signal data_recv_new : std_logic;
-	-- signal rdy_trans     : std_logic;
 
 	signal send_trans, send_trans_next  : std_logic;
 	signal data_trans, data_trans_next  : std_logic_vector(7 downto 0);
 
 	signal clk_slow: std_logic;
-	signal seed: std_logic_vector((LEN - 1) downto 0);
+	signal seed: std_logic_vector((LEN - 1) downto 0) := (others => '0');
+
+	signal rndnumb	: std_logic_vector((LEN - 1) downto 0) := (others => '0');
 	
-	signal test_fin: std_logic := 0;
+	signal test_fin: std_logic := '0';
+
+	signal en_7seg : std_logic := '0';
 
 	type type_state is (
 		STATE_IDLE,
@@ -73,7 +81,7 @@ architecture behavioral of rng is
 	
 begin
 
-	slowclk: slowclk
+	slowclk: entity work.slowclk
 		port map (
 			R2 => R2,
 			R1 => R1,
@@ -81,7 +89,7 @@ begin
 			clk_slow => clk_slow
 		);
 
-	trng: trng
+	trng: entity work.trng
 		generic map(
 			LEN => LEN
 		)
@@ -92,7 +100,7 @@ begin
 			seed => seed
 		);
 		
-	prng: prng
+	prng: entity work.prng
 		generic map(
 			LEN => LEN
 		)
@@ -100,6 +108,19 @@ begin
 		port map (
 			seed => seed,
 			rndnumb => rndnumb
+		);
+		
+	sevenseg: entity work.sevenseg
+		generic map(
+				LEN => LEN 
+		)
+			
+		port map(
+			rndnumb	=> rndnumb,
+			clk	=> clk_fast,
+			en_new_numb	=> en_7seg,
+			segment7 => segment7,
+			anode => anode
 		);
 		
 	-- uart_recv : entity work.uart_rx
@@ -127,7 +148,7 @@ begin
 			rst   => reset,
 			send  => send_trans,
 			data  => data_trans,
-			rdy   => rdy_trans,
+			rdy   => RDY,
 			tx    => UART_TX
 		);
 
@@ -137,7 +158,8 @@ begin
 		if(reset = '1') then		
 			send_trans <= '0';
 			data_trans <= (others => '0');
-			test_fin   := 0;			
+			test_fin   <= '0';
+			en_7seg    <= '0';
 			state      <= STATE_IDLE;
 
 		elsif(rising_edge(clk_fast)) then		
@@ -160,7 +182,8 @@ begin
 		case state is
 
 				when STATE_IDLE =>
-
+					en_7seg <= '0';
+					test_fin <= '0';
 					if mode = '1' then
 						state_next   <= STATE_TEST;
 					else
@@ -183,39 +206,42 @@ begin
 							-- UART rndnumb senden
 							for j in 0 to (LEN - 1) loop
 								if rndnumb(j) = '1' then
-									data_trans_next <= "0110001"; -- ASCII-Code: 1
+									data_trans_next <= "00110001"; -- ASCII-Code: 1
 									send_trans_next <= '1';
 								else
-									data_trans_next <= "0110000"; -- ASCII-Code: 0
+									data_trans_next <= "00110000"; -- ASCII-Code: 0
 									send_trans_next <= '1';
 								end if;
-								data_trans_next <= "0110000"; -- ASCII-Code: 0
+								-- Leerzeichen nach jedem Bit eingefügt
+								data_trans_next <= "00100000"; -- ASCII-Code: Leerzeichen
 								send_trans_next <= '1';
 							end loop;
-							-- Eventuell gehört ein Leerzeichen nach jedem Bit eingefügt
-							-- data_trans_next <= "0100000"; -- ASCII-Code: Leerzeichen
-							-- send_trans_next <= '1';
+							data_trans_next <= "00001010"; -- ASCII-Code: 10: Line Feed
+							send_trans_next <= '1';
 						end loop;
 						
-						test_fin := '1';
+						test_fin <= '1';
 						
 					end if;					
 					
 				when STATE_PROD =>
 					
 					if start = '1' then
-					
+						en_7seg <= '1';
 						-- UART rndnumb senden
 						for j in 0 to (LEN - 1) loop
 							if rndnumb(j) = '1' then
-								data_trans_next <= 49; -- ASCII-Code: 1
+								data_trans_next <= "00110001"; -- ASCII-Code: 1
 								send_trans_next <= '1';
 							else
-								data_trans_next <= 48; -- ASCII-Code: 0
+								data_trans_next <= "00110000"; -- ASCII-Code: 0
 								send_trans_next <= '1';
 							end if;
+							-- Leerzeichen nach jedem Bit eingefügt
+							data_trans_next <= "00100000"; -- ASCII-Code: Leerzeichen
+							send_trans_next <= '1';
 						end loop;
-						data_trans_next <= 10; -- ASCII-Code: Line Feed
+						data_trans_next <= "00001010"; -- ASCII-Code: 10: Line Feed
 						send_trans_next <= '1';
 					end if;
 					

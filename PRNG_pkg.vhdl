@@ -24,7 +24,8 @@ package prng_pkg is
 		
 		port (
 			seed: in std_logic_vector((LEN - 1) downto 0);
-			rndnumb: out std_logic_vector((LEN - 1) downto 0)
+			rndnumb: out std_logic_vector((LEN - 1) downto 0);
+			rnd_valid: out std_logic
 		);
 	
 	end component prng;

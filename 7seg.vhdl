@@ -86,7 +86,7 @@ begin
 			else
 				length_min := rndnumb_temp'length;
 			end if;
-			for k in 0 to length_min loop
+			for k in 0 to length_min - 1 loop
 				rndnumb_temp(k) := rndnumb(k);
 			end loop;
 			
