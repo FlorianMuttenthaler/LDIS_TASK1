@@ -29,6 +29,7 @@ architecture beh of trng_tb is
 	
 	signal clk_slow: std_logic;	
 	signal clk_fast: std_logic;
+	signal seed_en: std_logic;
 	signal seed: std_logic_vector((LEN - 1) downto 0);
 	
 begin
@@ -42,7 +43,8 @@ begin
 		port map (
 			clk_slow => clk_slow,
 			clk_fast => clk_fast,
-			seed => seed
+			seed => seed,
+			seed_en => seed_en
 		);
 
 	clk_slow_gen : process

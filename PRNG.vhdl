@@ -38,15 +38,15 @@ architecture beh of prng is
 
 	signal mod_sig : integer := 0;
 	signal seed_sig : integer := 0;
-	--signal start : std_logic := '0';
 
 	-- States:
 	type type_state is (
+		STATE_IDLE,
 		STATE_INPUT,
 		STATE_COMPARE
 	);
 
-	signal state, state_next : type_state;
+	signal state, state_next : type_state := STATE_IDLE;
 
 --	function gcd_sub (modulus, seed_temp : integer) return integer is
 --		variable swap:integer := 0;
@@ -72,12 +72,13 @@ architecture beh of prng is
 --	end gcd_sub;
 begin
 	
---	start_proc : process(seed)
---	begin
---		start <= '1';
---	end process start_proc;
-	
-	state_proc : process(state)
+-------------------------------------------------------------------------------
+--
+-- Process state_proc: triggered by Clk and state
+-- Evaluates if the transmitted seed is valid by a gcd algorithm implemented 
+-- in a state maschine
+--
+	state_proc : process(Clk, state)
 		variable modulus : integer := 0;
 		variable seed_temp: integer := 0;
 	begin
@@ -87,12 +88,14 @@ begin
 
 		case state is
 			
+			when STATE_IDLE =>
+				null;
+			
 			when STATE_INPUT =>
 				if seed_en = '1' then
 					mod_sig <= M; -- Kopie erstellen
 					seed_sig <= to_integer(unsigned(seed));
 					state_next <= STATE_COMPARE;
-					--start <= '0';
 				end if;
 					
 			when STATE_COMPARE =>
@@ -114,6 +117,11 @@ begin
 		end case;
 	end process state_proc;
 
+-------------------------------------------------------------------------------
+--
+-- Process sync_proc: triggered by Clk and seed_en
+-- synchronization of state maschine
+--
 	sync_proc: process(Clk, seed_en)
 	begin
 		if seed_en = '1' then
@@ -150,7 +158,7 @@ begin
 -------------------------------------------------------------------------------
 --
 -- Process bbs_proc: triggered by seed_valid
--- 
+-- algorithm to generate the pseudo random number based on the BBS algorithm
 --
 	bbs_proc : process(seed_valid)
 --		variable i: integer := 0; -- Laufindex für while

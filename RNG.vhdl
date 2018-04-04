@@ -65,6 +65,7 @@ architecture beh of rng is
 
 	signal clk_slow: std_logic; -- Output of SlowClock module
 	signal seed: std_logic_vector((LEN - 1) downto 0) := (others => '0'); -- Output TRNG module
+	signal seed_en: std_logic := '0'; -- Output TRNG module
 	signal rndnumb	: std_logic_vector((LEN - 1) downto 0) := (others => '0'); -- Output of PRNG module
 	
 	signal test_fin: std_logic := '0'; -- Flag for loop for NIST analyse
@@ -77,7 +78,7 @@ architecture beh of rng is
 		STATE_PROD
 	);
 
-	signal state, state_next : type_state;
+	signal state, state_next : type_state := STATE_IDLE;
 	
 begin
 
@@ -97,7 +98,8 @@ begin
 		port map (
 			clk_slow => clk_slow,
 			clk_fast => clk_fast,
-			seed => seed
+			seed => seed,
+			seed_en => seed_en
 		);
 		
 	prng: entity work.prng
@@ -107,6 +109,7 @@ begin
 			
 		port map (
 			seed => seed,
+			seed_en => seed_en,
 			rndnumb => rndnumb
 		);
 		
