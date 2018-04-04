@@ -85,6 +85,12 @@ begin
 	
 	end process seed_valid_proc;
 
+			
+-------------------------------------------------------------------------------
+--
+-- Process bbs_proc: triggered by seed_valid
+-- 
+--
 	bbs_proc : process(seed_valid)
 --		variable i: integer := 0; -- Laufindex für while
 		variable x: integer := 0;

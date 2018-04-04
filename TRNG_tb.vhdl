@@ -24,7 +24,7 @@ architecture beh of trng_tb is
 	for trng_0: trng use entity work.trng;	
 
 	constant LEN : integer := 10; -- Anzahl von Bits
-	constant clk_slow_Period : time := 19.5 ns; --50kHz
+	constant clk_slow_Period : time := 19.5 ns; -- ab it more than 50kHz
 	constant clk_fast_Period : time := 1 ns;  --1MHz
 	
 	signal clk_slow: std_logic;	

@@ -1,6 +1,8 @@
 -------------------------------------------------------------------------------
 --
 -- 7-segment display Testbench
+-- NOTE: Testbench used to test the segment light diplay with a random number 
+-- smaller than display size
 --
 -------------------------------------------------------------------------------
 --

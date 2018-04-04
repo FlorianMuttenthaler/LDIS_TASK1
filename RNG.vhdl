@@ -22,7 +22,7 @@ entity rng is
 
 	-- 'LEN' is the generic value of the entity.
 	-- 'R2', 'clk_fast', 'reset', 'mode' and 'start' are the inputs of rng entity.
-	-- 'R1', 'X', 'rndnumb' and 'segment7' are the output of the entity.
+	-- 'R1', 'X', 'segment7' and 'UART_TX' are the output of the entity.
 
 	generic(
 			LEN : integer := 128 -- Anzahl von Bits, DEFAULT = 128
@@ -48,29 +48,29 @@ end rng;
 --
 architecture beh of rng is
 
-	constant CLK_FREQ    : integer := 100E6;
-	constant BAUDRATE    : integer := 9600;
-	constant TEST_RUNS	 : integer := 100000;
+	constant CLK_FREQ    : integer := 100E6; -- UART parameter
+	constant BAUDRATE    : integer := 9600; -- UART parameter
+	constant TEST_RUNS	 : integer := 100000; -- Test Runs for NIST analyse tool
 	
-	signal RDY		 : std_logic := '1';
+	signal RDY		 : std_logic := '1'; --UART parameter
 
-	signal rnd_valid : std_logic := '0';
+	signal rnd_valid : std_logic := '0'; --Siganle for validaton of actual random number
 
 	-- signal data_recv     : std_logic_vector(7 downto 0);
 	-- signal data_recv_new : std_logic;
 
+	-- UART Transmit Signals
 	signal send_trans, send_trans_next  : std_logic;
 	signal data_trans, data_trans_next  : std_logic_vector(7 downto 0);
 
-	signal clk_slow: std_logic;
-	signal seed: std_logic_vector((LEN - 1) downto 0) := (others => '0');
-
-	signal rndnumb	: std_logic_vector((LEN - 1) downto 0) := (others => '0');
+	signal clk_slow: std_logic; -- Output of SlowClock module
+	signal seed: std_logic_vector((LEN - 1) downto 0) := (others => '0'); -- Output TRNG module
+	signal rndnumb	: std_logic_vector((LEN - 1) downto 0) := (others => '0'); -- Output of PRNG module
 	
-	signal test_fin: std_logic := '0';
+	signal test_fin: std_logic := '0'; -- Flag for loop for NIST analyse
+	signal en_7seg : std_logic := '0'; -- Enable flag for 7seg module used for valid random number
 
-	signal en_7seg : std_logic := '0';
-
+	-- States:
 	type type_state is (
 		STATE_IDLE,
 		STATE_TEST,
@@ -152,11 +152,22 @@ begin
 			tx    => UART_TX
 		);
 
+-------------------------------------------------------------------------------
+--
+-- Process rnd_valid_proc: triggered by rndnumb
+-- if new rndnumb is generated, validation flag is set
+--
 	rnd_valid_proc: process(rndnumb)
 	begin
 		rnd_valid <= '1';
 	end process rnd_valid_proc;		
-	
+
+-------------------------------------------------------------------------------
+--
+-- Process rnd_valid_proc: triggered by clk_fast and reset
+-- if reset the reset state maschine, flags and UART communinicatin
+-- each clk pereiod basic state and uart synchronization
+--
 	sync_proc: process (clk_fast, reset)
 	begin
 
@@ -175,7 +186,12 @@ begin
 		end if;
 
 	end process sync_proc;
-	
+
+-------------------------------------------------------------------------------
+--
+-- Process state_out_proc: triggered by state and mode
+-- basic state maschine with IDLE state, state for NIST analyse and state for segment display
+--
 	state_out_proc: process (state, mode)
 	begin
 

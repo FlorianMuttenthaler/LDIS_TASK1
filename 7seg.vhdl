@@ -1,7 +1,6 @@
 -----------------------------------------------------------------------------
 --
 -- 7-segment display
--- Source: http://vhdlguru.blogspot.co.at/2010/03/vhdl-code-for-bcd-to-7-segment-display.html
 --
 -------------------------------------------------------------------------------
 --
@@ -14,7 +13,7 @@ use ieee.numeric_std.all;
 entity sevenseg is
 
 	-- 'LEN' is the generic value of the entity.
-	-- 'rndnumb' and 'clk' are the inputs of sevenseg entity.
+	-- 'rndnumb' and 'clk' and 'en_new_numb' are the inputs of sevenseg entity.
 	-- 'segment7' and 'anode' are the output of the entity.
 
 	generic(
@@ -43,6 +42,11 @@ architecture behavioral of sevenseg is
 	signal array_seg: array_t := (others => (others => '0'));  -- Initialisierung
 	signal digit:integer  := 0;
 
+-------------------------------------------------------------------------------
+--
+-- Function bcd_to_7seg: used to map the hexadezimal numbers of random number
+-- to the defined mapping of the segment light display
+--
 	function bcd_to_7seg (bcd: std_logic_vector(3 downto 0)) return std_logic_vector is 
 		
 	begin
@@ -76,6 +80,14 @@ architecture behavioral of sevenseg is
 
 begin
 
+-------------------------------------------------------------------------------
+--
+-- Process bcd_proc: triggered by en_new_numb
+-- if en_new_numb = 1 then a new random number will be displayed
+-- algorithm of the process is based on array that can be displayed with a fixed size
+-- if random number is to short than leading zeros are implemented
+-- if random number is to large then the MSBs are cut
+--
 	bcd_proc: process (en_new_numb)
 		variable rndnumb_temp:std_logic_vector(32 downto 0) := (others => '0');
 		variable length_min:integer := 0;
@@ -98,7 +110,13 @@ begin
 		end if;		
 
 	end process bcd_proc;
-	
+
+-------------------------------------------------------------------------------
+--
+-- Process bcd_proc: triggered by clk
+-- this porcess runs in a ind of continious loop synchronized by the signal digit
+-- the process is used to write the right ouput to segment7 and the related anode
+--
 	write_proc: process (clk)
 		variable segment_temp:std_logic_vector(3 downto 0) := (others => '0');
 	begin

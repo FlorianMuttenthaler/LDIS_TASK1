@@ -15,7 +15,7 @@ package sevenseg_pkg is
 	component sevenseg is
 
 		-- 'LEN' is the generic value of the entity.
-		-- 'rndnumb' and 'clk' are the inputs of sevenseg entity.
+		-- 'rndnumb' and 'clk' and 'en_new_numb' are the inputs of sevenseg entity.
 		-- 'segment7' and 'anode' are the output of the entity.
 
 		generic(

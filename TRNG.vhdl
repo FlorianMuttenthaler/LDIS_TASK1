@@ -37,8 +37,12 @@ architecture beh of trng is
 	
 begin
 
+-------------------------------------------------------------------------------
+--
+-- Process state_out_proc: triggered by clk_slow
+-- fulfills a seed array with values of clk_fast sampled by clk_slow
+--
 	trng_proc : process(clk_slow)
-		
 	begin
 	
 		if rising_edge(clk_slow) then
