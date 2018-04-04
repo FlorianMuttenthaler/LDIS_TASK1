@@ -23,6 +23,7 @@ entity prng is
 	port (
 		seed   : in std_logic_vector((LEN - 1) downto 0);
 		Clk	   : in std_logic;
+		seed_en: in std_logic;
 		rndnumb: out std_logic_vector((LEN - 1) downto 0)
 	);
 
@@ -37,7 +38,7 @@ architecture beh of prng is
 
 	signal mod_sig : integer := 0;
 	signal seed_sig : integer := 0;
-	signal start : std_logic := '0';
+	--signal start : std_logic := '0';
 
 	-- States:
 	type type_state is (
@@ -71,10 +72,10 @@ architecture beh of prng is
 --	end gcd_sub;
 begin
 	
-	start_proc : process(seed)
-	begin
-		start <= '1';
-	end process start_proc;
+--	start_proc : process(seed)
+--	begin
+--		start <= '1';
+--	end process start_proc;
 	
 	state_proc : process(state)
 		variable modulus : integer := 0;
@@ -87,11 +88,11 @@ begin
 		case state is
 			
 			when STATE_INPUT =>
-				if start = '1' then
+				if seed_en = '1' then
 					mod_sig <= M; -- Kopie erstellen
 					seed_sig <= to_integer(unsigned(seed));
 					state_next <= STATE_COMPARE;
-					start <= '0';
+					--start <= '0';
 				end if;
 					
 			when STATE_COMPARE =>
@@ -113,14 +114,12 @@ begin
 		end case;
 	end process state_proc;
 
-	sync_proc: process(Clk)
+	sync_proc: process(Clk, seed_en)
 	begin
-		if rising_edge(Clk) then
-			if start = '1' then
-				state <= STATE_INPUT;
-			else
-				state <= state_next;
-			end if;
+		if seed_en = '1' then
+			state <= STATE_INPUT;
+		elsif rising_edge(Clk) then
+			state <= state_next;
 		end if;
 	end process sync_proc;
 		

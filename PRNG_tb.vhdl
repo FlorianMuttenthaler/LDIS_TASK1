@@ -29,6 +29,7 @@ architecture beh of prng_tb is
 	signal Clk : std_logic := '0';
 	signal seed: std_logic_vector((LEN - 1) downto 0) := (others => '0');
 	signal rndnumb: std_logic_vector((LEN - 1) downto 0);
+	signal seed_en: std_logic := '0';
 begin
 
 	--  Component instantiation.
@@ -40,6 +41,7 @@ begin
 		port map (
 			seed => seed,
 			Clk => Clk,
+			seed_en => seed_en,
 			rndnumb => rndnumb
 		);
 		
@@ -61,11 +63,27 @@ begin
 
 		seed <= "0001000011"; -- 67
 		
+		wait for 1 ns;
+		
+		seed_en <= '1';
+		
+		wait for 1.5 ns;
+			
+		seed_en <= '0';
+		
 		wait for 100 ns;
 
 		assert rndnumb = "1010101010" report "correct calculation" severity note; --682
 
 		seed <= "0010011010"; --154
+
+		wait for 1 ns;
+		
+		seed_en <= '1';
+		
+		wait for 1.5 ns;
+			
+		seed_en <= '0';
 
 		wait for 100 ns;
 
