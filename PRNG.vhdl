@@ -13,7 +13,7 @@ use ieee.numeric_std.all;
 entity prng is
 
 	-- 'LEN' is the generic value of the entity.
-	-- 'seed' is the input of prng entity.
+	-- 'seed' and 'Clk' are the input of prng entity.
 	-- 'rndnumb' is the output of the entity.
 	
 	generic(
@@ -21,7 +21,8 @@ entity prng is
 	);
 	
 	port (
-		seed: in std_logic_vector((LEN - 1) downto 0);
+		seed   : in std_logic_vector((LEN - 1) downto 0);
+		Clk	   : in std_logic;
 		rndnumb: out std_logic_vector((LEN - 1) downto 0)
 	);
 
@@ -34,39 +35,104 @@ architecture beh of prng is
 	
 	signal seed_valid: integer := 0;
 
-	function gcd_sub (modulus, seed_temp : integer) return integer is
-		variable swap:integer := 0;
-		variable modu:integer := 0;
-		variable temp:integer := 0;
-	begin
-		temp := seed_temp;
-		modu := modulus;
-		temp := temp - modu;
-		if temp = 1 then
-			return 1;
-		end if;
-		if temp = 0 then
-			return 0;
-		end if;
-		if temp < 0 then
-			temp := temp + modu;
-		end if;
-			swap := temp;
-			temp := modu;
-			modu := swap;
-			return gcd_sub(modu, temp);
-	end gcd_sub;
+	signal mod_sig : integer := 0;
+	signal seed_sig : integer := 0;
+	signal start : std_logic := '0';
+
+	-- States:
+	type type_state is (
+		STATE_INPUT,
+		STATE_COMPARE
+	);
+
+	signal state, state_next : type_state;
+
+--	function gcd_sub (modulus, seed_temp : integer) return integer is
+--		variable swap:integer := 0;
+--		variable modu:integer := 0;
+--		variable temp:integer := 0;
+--	begin
+--		temp := seed_temp;
+--		modu := modulus;
+--		temp := temp - modu;
+--		if temp = 1 then
+--			return 1;
+--		end if;
+--		if temp = 0 then
+--			return 0;
+--		end if;
+--		if temp < 0 then
+--			temp := temp + modu;
+--		end if;
+--			swap := temp;
+--			temp := modu;
+--			modu := swap;
+--			return gcd_sub(modu, temp);
+--	end gcd_sub;
 begin
-
-	seed_valid_proc : process(seed)
-		variable modulus: integer := 0;
-		variable seed_temp: integer := 0;
-
+	
+	start_proc : process(seed)
 	begin
-		modulus := M; -- Kopie erstellen
-		seed_temp := to_integer(unsigned(seed));
+		start <= '1';
+	end process start_proc;
+	
+	state_proc : process(state)
+		variable modulus : integer := 0;
+		variable seed_temp: integer := 0;
+	begin
+		modulus := mod_sig; -- Kopie erstellen
+		seed_temp := seed_sig;
+		state_next <= state;
 
-		if seed_temp /= 0 then -- Falls seed = 0 Algorithmus überspringen
+		case state is
+			
+			when STATE_INPUT =>
+				if start = '1' then
+					mod_sig <= M; -- Kopie erstellen
+					seed_sig <= to_integer(unsigned(seed));
+					state_next <= STATE_COMPARE;
+					start <= '0';
+				end if;
+					
+			when STATE_COMPARE =>
+				if modulus = seed_temp then
+					seed_valid <= to_integer(unsigned(seed)); -- seed wird für weitere Berechnung weiter gereicht
+					state_next <= STATE_INPUT;
+				elsif modulus > seed_temp then
+					modulus := modulus - seed_temp;
+					mod_sig <= modulus;
+					state_next <= STATE_COMPARE;
+				else
+					seed_temp := seed_temp - modulus;
+					seed_sig <= seed_temp;
+					state_next <= STATE_COMPARE;
+				end if;
+					
+			when others => 
+				null;
+		end case;
+	end process state_proc;
+
+	sync_proc: process(Clk)
+	begin
+		if rising_edge(Clk) then
+			if start = '1' then
+				state <= STATE_INPUT;
+			else
+				state <= state_next;
+			end if;
+		end if;
+	end process sync_proc;
+		
+--	seed_valid_proc : process(seed)
+--		variable modulus: integer := 0;
+--		variable seed_temp: integer := 0;
+
+--	begin
+--		modulus := M; -- Kopie erstellen
+--		seed_temp := to_integer(unsigned(seed));
+
+--		if seed_temp /= 0 then -- Falls seed = 0 Algorithmus überspringen
 --			while seed_temp /= modulus loop -- Algorithmus Grösster gemeinsamer Teiler
 --				if seed_temp > modulus then
 --					seed_temp := seed_temp - modulus;
@@ -74,18 +140,14 @@ begin
 --					modulus := modulus - seed_temp;
 --				end if;
 --			end loop;
-			if gcd_sub(modulus, seed_temp) = 1 then
-				seed_valid <= to_integer(unsigned(seed)); -- seed wird für weitere Berechnung weiter gereicht
-			end if;
-		end if;
+--			if gcd_sub(modulus, seed_temp) = 1 then
+--				seed_valid <= to_integer(unsigned(seed)); -- seed wird für weitere Berechnung weiter gereicht
+--			end if;
+--		end if;
 
 --		if seed_temp = 1 then -- Grösster gemeinsamer Teiler ist 1 = teilerfremd
 --			seed_valid <= to_integer(unsigned(seed)); -- seed wird für weitere Berechnung weiter gereicht
 --		end if;
-	
-	end process seed_valid_proc;
-
-			
 -------------------------------------------------------------------------------
 --
 -- Process bbs_proc: triggered by seed_valid

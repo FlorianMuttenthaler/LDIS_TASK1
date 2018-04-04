@@ -15,7 +15,7 @@ package prng_pkg is
 	component prng is
 
 		-- 'LEN' is the generic value of the entity.
-		-- 'seed' is the input of prng entity.
+		-- 'seed' and 'Clk' are the inputs of prng entity.
 		-- 'rndnumb' is the output of the entity.
 		
 		generic(
@@ -24,6 +24,7 @@ package prng_pkg is
 		
 		port (
 			seed: in std_logic_vector((LEN - 1) downto 0);
+			Clk	   : in std_logic;
 			rndnumb: out std_logic_vector((LEN - 1) downto 0)
 		);
 	

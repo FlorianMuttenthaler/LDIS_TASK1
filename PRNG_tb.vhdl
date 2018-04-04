@@ -24,7 +24,9 @@ architecture beh of prng_tb is
 	for prng_0: prng use entity work.prng;	
 
 	constant LEN : integer := 10; -- Anzahl von Bits
+	constant clk_period : time := 1 ns;
 	
+	signal Clk : std_logic := '0';
 	signal seed: std_logic_vector((LEN - 1) downto 0) := (others => '0');
 	signal rndnumb: std_logic_vector((LEN - 1) downto 0);
 begin
@@ -37,8 +39,19 @@ begin
 			
 		port map (
 			seed => seed,
+			Clk => Clk,
 			rndnumb => rndnumb
 		);
+		
+	Clk_process : process
+	
+	begin
+		Clk <= '0';
+		wait for clk_period/2;
+		Clk <= '1';
+		wait for clk_period/2;
+
+	end process clk_process;	
 
 	--  This process does the real job.
 	stimuli : process
