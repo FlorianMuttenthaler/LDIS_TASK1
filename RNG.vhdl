@@ -109,6 +109,7 @@ begin
 			
 		port map (
 			seed => seed,
+			Clk => clk_fast,
 			seed_en => seed_en,
 			rndnumb => rndnumb
 		);
