@@ -40,7 +40,7 @@ architecture behavioral of sevenseg is
 	type array_t is array (0 to 7) of std_logic_vector(3 downto 0);
 	
 	signal array_seg: array_t := (others => (others => '0'));  -- Initialisierung
-	signal digit:integer  := 0;
+	signal digit:integer range 0 to 7  := 0;
 
 -------------------------------------------------------------------------------
 --
@@ -90,7 +90,7 @@ begin
 --
 	bcd_proc: process (en_new_numb)
 		variable rndnumb_temp:std_logic_vector(32 downto 0) := (others => '0');
-		variable length_min:integer := 0;
+		variable length_min:integer range 0 to 33 := 0;
 	begin
 		if en_new_numb = '1' then
 			if LEN < rndnumb_temp'length then

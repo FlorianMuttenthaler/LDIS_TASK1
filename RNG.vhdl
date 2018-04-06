@@ -68,7 +68,7 @@ architecture beh of rng is
 	signal seed_en: std_logic := '0'; -- Output TRNG module
 	signal rndnumb	: std_logic_vector((LEN - 1) downto 0) := (others => '0'); -- Output of PRNG module
 	
-	signal run_sig : integer := 0; -- Signal um die Testläufe mitzuzählen
+	signal run_sig : integer range 0 to TEST_RUNS := 0; -- Signal um die Testläufe mitzuzählen
 	signal test_fin: std_logic := '0'; -- Flag for loop for NIST analyse
 	signal en_7seg : std_logic := '0'; -- Enable flag for 7seg module used for valid random number
 
@@ -200,7 +200,7 @@ begin
 -- basic state maschine with IDLE state, state for NIST analyse and state for segment display
 --
 	state_out_proc: process (state, mode)
-		variable run : integer := 0;
+		variable run : integer range 0 to TEST_RUNS := 0;
 	begin
 
 		-- prevent latches
@@ -224,7 +224,7 @@ begin
 					if test_fin = '1' then
 						null;
 					else
-						run <= run_sig;
+						run := run_sig;
 						
 						if run = (TEST_RUNS - 1) then
 							test_fin <= '1';
@@ -238,7 +238,7 @@ begin
 				when STATE_VALID =>
 					if rnd_valid = '1' then	-- Abfrage ob neue rndnumb vorhanden
 						state_next   <= STATE_TEST;
-						rnd_valid = '0';
+						rnd_valid <= '0';
 					end if;	
 				
 				when STATE_TEST =>

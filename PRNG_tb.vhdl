@@ -30,6 +30,7 @@ architecture beh of prng_tb is
 	signal seed: std_logic_vector((LEN - 1) downto 0) := (others => '0');
 	signal rndnumb: std_logic_vector((LEN - 1) downto 0);
 	signal seed_en: std_logic := '0';
+	signal rnd_en: std_logic := '0';
 begin
 
 	--  Component instantiation.
@@ -42,7 +43,8 @@ begin
 			seed => seed,
 			Clk => Clk,
 			seed_en => seed_en,
-			rndnumb => rndnumb
+			rndnumb => rndnumb,
+			rnd_en => rnd_en
 		);
 		
 	Clk_process : process

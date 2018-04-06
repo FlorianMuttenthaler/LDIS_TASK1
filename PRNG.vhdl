@@ -24,7 +24,8 @@ entity prng is
 		seed   : in std_logic_vector((LEN - 1) downto 0);
 		Clk	   : in std_logic;
 		seed_en: in std_logic;
-		rndnumb: out std_logic_vector((LEN - 1) downto 0)
+		rndnumb: out std_logic_vector((LEN - 1) downto 0);
+		rnd_en : out std_logic
 	);
 
 end prng;
@@ -36,8 +37,10 @@ architecture beh of prng is
 	
 	signal seed_valid: integer := 0;
 
-	signal mod_sig : integer := 0;
+	signal mod_sig : integer range 0 to M := 0;
 	signal seed_sig : integer := 0;
+
+	signal rnd_valid : std_logic := '0';
 
 	-- States:
 	type type_state is (
@@ -48,28 +51,6 @@ architecture beh of prng is
 
 	signal state, state_next : type_state := STATE_IDLE;
 
---	function gcd_sub (modulus, seed_temp : integer) return integer is
---		variable swap:integer := 0;
---		variable modu:integer := 0;
---		variable temp:integer := 0;
---	begin
---		temp := seed_temp;
---		modu := modulus;
---		temp := temp - modu;
---		if temp = 1 then
---			return 1;
---		end if;
---		if temp = 0 then
---			return 0;
---		end if;
---		if temp < 0 then
---			temp := temp + modu;
---		end if;
---			swap := temp;
---			temp := modu;
---			modu := swap;
---			return gcd_sub(modu, temp);
---	end gcd_sub;
 begin
 	
 -------------------------------------------------------------------------------
@@ -79,7 +60,7 @@ begin
 -- in a state maschine
 --
 	state_proc : process(Clk, state)
-		variable modulus : integer := 0;
+		variable modulus : integer range 0 to M := 0;
 		variable seed_temp: integer := 0;
 	begin
 		modulus := mod_sig; -- Kopie erstellen
@@ -131,30 +112,6 @@ begin
 		end if;
 	end process sync_proc;
 		
---	seed_valid_proc : process(seed)
---		variable modulus: integer := 0;
---		variable seed_temp: integer := 0;
-
---	begin
---		modulus := M; -- Kopie erstellen
---		seed_temp := to_integer(unsigned(seed));
-
---		if seed_temp /= 0 then -- Falls seed = 0 Algorithmus überspringen
---			while seed_temp /= modulus loop -- Algorithmus Grösster gemeinsamer Teiler
---				if seed_temp > modulus then
---					seed_temp := seed_temp - modulus;
---				else
---					modulus := modulus - seed_temp;
---				end if;
---			end loop;
---			if gcd_sub(modulus, seed_temp) = 1 then
---				seed_valid <= to_integer(unsigned(seed)); -- seed wird für weitere Berechnung weiter gereicht
---			end if;
---		end if;
-
---		if seed_temp = 1 then -- Grösster gemeinsamer Teiler ist 1 = teilerfremd
---			seed_valid <= to_integer(unsigned(seed)); -- seed wird für weitere Berechnung weiter gereicht
---		end if;
 -------------------------------------------------------------------------------
 --
 -- Process bbs_proc: triggered by seed_valid
@@ -186,37 +143,28 @@ begin
 			
 			x := temp; -- nächsten Iterationswert übergeben
 		end loop;
-		
---		-- weitere Möglichkeit um mit einer Iteration gleich zwei Bits zu generieren
---		while i <= (LEN / 2) loop
---			temp := (x * x) mod M; --BBS Algorithmus
---			
---			temp_vec := std_logic_vector(to_unsigned(temp, temp_vec'length));
---
---			for j in temp_vec'range loop -- Paritätsbit berechnen	
---				parity_v := parity_v xor temp_vec(j);
---			end loop;
---			bit_i := parity_v;	
---			
---			rndnumb_temp(i) := bit_i; -- i.tes Bit schreiben
---			
---			bit_i := temp_vec(0); -- Least significant bit berechnen
---			
---			rndnumb_temp(i + 1) := bit_i; -- (i + 1).tes Bit schreiben
---			
---			x := temp; -- nächsten Iterationswert übergeben
---			i := i + 2;
---		end loop;
---		
---		i := 0; -- Reset Laufindex
---		
---		if (LEN mod 2) = 1 then
---			rndnumb_temp(LEN - 1) := '0'; -- Letzten Wert setzen, da LEN ungerade
---		end if;
 	
-		rndnumb <= rndnumb_temp; -- Zufallszahl ausgeben	
+		rndnumb <= rndnumb_temp; -- Zufallszahl ausgeben
+		rnd_valid <= '1';
 	end process bbs_proc;
-	
+														 
+-------------------------------------------------------------------------------
+--
+-- Process sync_proc: triggered by Clk and seed_en
+-- synchronization of state maschine
+--
+	en_proc: process(Clk, rnd_valid)
+	begin
+		if rising_edge(Clk) then
+			if rnd_valid = '1' then
+				rnd_en <= '1';
+				rnd_valid <= '0';
+			else
+				rnd_en <= '0';
+			end if;
+		end if;
+	end process en_proc;
+													 
 end beh;
 --
 -------------------------------------------------------------------------------

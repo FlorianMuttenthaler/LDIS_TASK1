@@ -32,7 +32,7 @@ end trng;
 -------------------------------------------------------------------------------
 --
 architecture beh of trng is
-	signal i: integer := 0;
+	signal i: integer range 0 to LEN := 0;
 	signal seed_array:std_logic_vector((LEN - 1) downto 0) := (others => '0');
 	
 begin

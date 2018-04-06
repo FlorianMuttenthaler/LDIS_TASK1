@@ -26,7 +26,8 @@ package prng_pkg is
 			seed: in std_logic_vector((LEN - 1) downto 0);
 			Clk	   : in std_logic;
 			seed_en: in std_logic;
-			rndnumb: out std_logic_vector((LEN - 1) downto 0)
+			rndnumb: out std_logic_vector((LEN - 1) downto 0);
+			rnd_en : out std_logic
 		);
 	
 	end component prng;
