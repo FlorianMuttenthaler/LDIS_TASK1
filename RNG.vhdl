@@ -68,12 +68,15 @@ architecture beh of rng is
 	signal seed_en: std_logic := '0'; -- Output TRNG module
 	signal rndnumb	: std_logic_vector((LEN - 1) downto 0) := (others => '0'); -- Output of PRNG module
 	
+	signal run_sig : integer := 0; -- Signal um die Testläufe mitzuzählen
 	signal test_fin: std_logic := '0'; -- Flag for loop for NIST analyse
 	signal en_7seg : std_logic := '0'; -- Enable flag for 7seg module used for valid random number
 
 	-- States:
 	type type_state is (
 		STATE_IDLE,
+		STATE_RUN,
+		STATE_VALID,
 		STATE_TEST,
 		STATE_PROD
 	);
@@ -181,7 +184,7 @@ begin
 			test_fin   <= '0';
 			en_7seg    <= '0';
 			state      <= STATE_IDLE;
-
+		
 		elsif(rising_edge(clk_fast)) then		
 			send_trans <= send_trans_next;
 			data_trans <= data_trans_next;		
@@ -197,6 +200,7 @@ begin
 -- basic state maschine with IDLE state, state for NIST analyse and state for segment display
 --
 	state_out_proc: process (state, mode)
+		variable run : integer := 0;
 	begin
 
 		-- prevent latches
@@ -210,44 +214,53 @@ begin
 					en_7seg <= '0';
 					test_fin <= '0';
 					if mode = '1' then
-						state_next   <= STATE_TEST;
+						state_next   <= STATE_RUN;
 					else
 						state_next   <= STATE_PROD;
 					end if;
-
-				when STATE_TEST =>
-
+						
+				when STATE_RUN =>	
+					
 					if test_fin = '1' then
 						null;
 					else
-						for i in 0 to (TEST_RUNS - 1) loop
+						run <= run_sig;
 						
-							-- Abfrage ob neue rndnumb vorhanden
-							while rnd_valid = '0' loop
-								null;
-							end loop;
-							
-							-- UART rndnumb senden
-							for j in 0 to (LEN - 1) loop
-								if rndnumb(j) = '1' then
-									data_trans_next <= "00110001"; -- ASCII-Code: 1
-									send_trans_next <= '1';
-								else
-									data_trans_next <= "00110000"; -- ASCII-Code: 0
-									send_trans_next <= '1';
-								end if;
-								-- Leerzeichen nach jedem Bit eingefügt
-								data_trans_next <= "00100000"; -- ASCII-Code: Leerzeichen
-								send_trans_next <= '1';
-							end loop;
-							data_trans_next <= "00001010"; -- ASCII-Code: 10: Line Feed
+						if run = (TEST_RUNS - 1) then
+							test_fin <= '1';
+						else
+							state_next <= STATE_VALID;
+							run := run + 1;
+							run_sig <= run;
+						end if;
+					end if;
+					
+				when STATE_VALID =>
+					if rnd_valid = '1' then	-- Abfrage ob neue rndnumb vorhanden
+						state_next   <= STATE_TEST;
+						rnd_valid = '0';
+					end if;	
+				
+				when STATE_TEST =>
+				
+					-- UART rndnumb senden
+					for j in 0 to (LEN - 1) loop
+						if rndnumb(j) = '1' then
+							data_trans_next <= "00110001"; -- ASCII-Code: 1
 							send_trans_next <= '1';
-							rnd_valid <= '0';
-						end loop;
-						
-						test_fin <= '1';
-						
-					end if;					
+						else
+							data_trans_next <= "00110000"; -- ASCII-Code: 0
+							send_trans_next <= '1';
+						end if;
+						-- Leerzeichen nach jedem Bit eingefügt
+						data_trans_next <= "00100000"; -- ASCII-Code: Leerzeichen
+						send_trans_next <= '1';
+					end loop;
+					
+					data_trans_next <= "00001010"; -- ASCII-Code: 10: Line Feed
+					send_trans_next <= '1';
+					
+					state_next <= STATE_RUN;
 					
 				when STATE_PROD =>
 					
