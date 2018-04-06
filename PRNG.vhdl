@@ -40,7 +40,7 @@ architecture beh of prng is
 	signal mod_sig : integer range 0 to M := 0;
 	signal seed_sig : integer := 0;
 
-	signal rnd_valid : std_logic := '0';
+	signal seed_flag : std_logic := '0';
 
 	-- States:
 	type type_state is (
@@ -50,6 +50,14 @@ architecture beh of prng is
 	);
 
 	signal state, state_next : type_state := STATE_IDLE;
+
+	-- States:
+	type type_state_bbs is (
+		STATE_IDLE,
+		STATE_OUTPUT
+	);
+
+	signal state_bbs, state_bbs_next : type_state_bbs := STATE_IDLE;
 
 begin
 	
@@ -73,6 +81,7 @@ begin
 				null;
 			
 			when STATE_INPUT =>
+				seed_flag <= '0';
 				if seed_en = '1' then
 					mod_sig <= M; -- Kopie erstellen
 					seed_sig <= to_integer(unsigned(seed));
@@ -82,6 +91,7 @@ begin
 			when STATE_COMPARE =>
 				if modulus = seed_temp then
 					seed_valid <= to_integer(unsigned(seed)); -- seed wird für weitere Berechnung weiter gereicht
+					seed_flag <= '1';
 					state_next <= STATE_INPUT;
 				elsif modulus > seed_temp then
 					modulus := modulus - seed_temp;
@@ -112,12 +122,13 @@ begin
 		end if;
 	end process sync_proc;
 		
+	
 -------------------------------------------------------------------------------
 --
 -- Process bbs_proc: triggered by seed_valid
 -- algorithm to generate the pseudo random number based on the BBS algorithm
 --
-	bbs_proc : process(seed_valid)
+	bbs_proc : process(seed_valid, state_bbs)
 --		variable i: integer := 0; -- Laufindex für while
 		variable x: integer := 0;
 		variable temp: integer := 0;
@@ -128,24 +139,41 @@ begin
 		
 	begin
 	
-		x := seed_valid; -- Startwert initialisieren
-		for i in 0 to (LEN - 1) loop
-			temp := (x * x) mod M; --BBS Algorithmus
+		state_bbs_next <= state_bbs;
+
+		case state_bbs is
 			
-			temp_vec := std_logic_vector(to_unsigned(temp, temp_vec'length));
-			
-			for j in temp_vec'range loop -- Paritätsbit berechnen	
-				parity_v := parity_v xor temp_vec(j);
-			end loop;
-			bit_i := parity_v; 		
-			
-			rndnumb_temp(i) := bit_i; -- i.tes Bit schreiben
-			
-			x := temp; -- nächsten Iterationswert übergeben
-		end loop;
-	
-		rndnumb <= rndnumb_temp; -- Zufallszahl ausgeben
-		rnd_valid <= '1';
+			when STATE_IDLE =>
+				rnd_en <= '0';
+				state_bbs_next <= STATE_OUTPUT;
+		
+			when STATE_OUTPUT =>
+				if seed_flag = '1' then
+					x := seed_valid; -- Startwert initialisieren
+					for i in 0 to (LEN - 1) loop
+						temp := (x * x) mod M; --BBS Algorithmus
+
+						temp_vec := std_logic_vector(to_unsigned(temp, temp_vec'length));
+
+						for j in temp_vec'range loop -- Paritätsbit berechnen	
+							parity_v := parity_v xor temp_vec(j);
+						end loop;
+						bit_i := parity_v; 		
+
+						rndnumb_temp(i) := bit_i; -- i.tes Bit schreiben
+
+						x := temp; -- nächsten Iterationswert übergeben
+					end loop;
+
+					rndnumb <= rndnumb_temp; -- Zufallszahl ausgeben
+					rnd_en <= '1';
+				end if;
+				state_bbs_next <= STATE_IDLE;
+																 
+		 	when others =>
+				null;
+															 
+			end case;
 	end process bbs_proc;
 														 
 -------------------------------------------------------------------------------
@@ -153,15 +181,10 @@ begin
 -- Process sync_proc: triggered by Clk and seed_en
 -- synchronization of state maschine
 --
-	en_proc: process(Clk, rnd_valid)
+	en_proc: process(Clk)
 	begin
 		if rising_edge(Clk) then
-			if rnd_valid = '1' then
-				rnd_en <= '1';
-				rnd_valid <= '0';
-			else
-				rnd_en <= '0';
-			end if;
+			state_bbs <= state_bbs_next;
 		end if;
 	end process en_proc;
 													 

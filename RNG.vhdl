@@ -66,6 +66,7 @@ architecture beh of rng is
 	signal clk_slow: std_logic; -- Output of SlowClock module
 	signal seed: std_logic_vector((LEN - 1) downto 0) := (others => '0'); -- Output TRNG module
 	signal seed_en: std_logic := '0'; -- Output TRNG module
+	signal rnd_en: std_logic := '0';
 	signal rndnumb	: std_logic_vector((LEN - 1) downto 0) := (others => '0'); -- Output of PRNG module
 	
 	signal run_sig : integer range 0 to TEST_RUNS := 0; -- Signal um die Testläufe mitzuzählen
@@ -114,7 +115,8 @@ begin
 			seed => seed,
 			Clk => clk_fast,
 			seed_en => seed_en,
-			rndnumb => rndnumb
+			rndnumb => rndnumb,
+			rnd_en => rnd_en
 		);
 		
 	sevenseg: entity work.sevenseg
@@ -164,9 +166,13 @@ begin
 -- Process rnd_valid_proc: triggered by rndnumb
 -- if new rndnumb is generated, validation flag is set
 --
-	rnd_valid_proc: process(rndnumb)
+	rnd_valid_proc: process(clk_fast, rnd_en)
 	begin
-		rnd_valid <= '1';
+		if rnd_en = '1' then
+			rnd_valid <= '1';
+		else
+			rnd_valid <= '0';
+		end if;
 	end process rnd_valid_proc;		
 
 -------------------------------------------------------------------------------
@@ -238,7 +244,7 @@ begin
 				when STATE_VALID =>
 					if rnd_valid = '1' then	-- Abfrage ob neue rndnumb vorhanden
 						state_next   <= STATE_TEST;
-						rnd_valid <= '0';
+						--rnd_valid <= '0';
 					end if;	
 				
 				when STATE_TEST =>
