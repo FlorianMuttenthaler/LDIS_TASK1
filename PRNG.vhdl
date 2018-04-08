@@ -14,7 +14,7 @@ entity prng is
 
 	-- 'LEN' is the generic value of the entity.
 	-- 'seed' and 'Clk' are the input of prng entity.
-	-- 'rndnumb' is the output of the entity.
+	-- 'rndnumb' and 'rnd_en' are the output of the entity.
 	
 	generic(
 		LEN: integer := 128 -- Anzahl von Bits, DEFAULT = 128

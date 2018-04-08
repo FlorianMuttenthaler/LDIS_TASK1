@@ -32,7 +32,7 @@ end trng;
 -------------------------------------------------------------------------------
 --
 architecture beh of trng is
-	signal i: integer range 0 to LEN := 0;
+	signal i_sig: integer range 0 to LEN := 0;
 	signal seed_array:std_logic_vector((LEN - 1) downto 0) := (others => '0');
 	
 begin
@@ -43,19 +43,22 @@ begin
 -- fulfills a seed array with values of clk_fast sampled by clk_slow
 --
 	trng_proc : process(clk_slow)
+		variable i : integer range 0 to LEN := 0;
 	begin
 	
 		if rising_edge(clk_slow) then
+			i := i_sig;
 			
 			seed_array(i) <= clk_fast;
 			if i = (LEN - 1) then
-				i <= 0;
+				i := 0;
 				seed <= seed_array;
 				seed_en <= '1';
 			else
-				i <= i + 1;
+				i := i + 1;
 				seed_en <= '0';
 			end if;
+			i_sig <= i;
 		end if;
 		
 	end process trng_proc;

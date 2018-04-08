@@ -25,7 +25,7 @@ entity rng is
 	-- 'R1', 'X', 'segment7' and 'UART_TX' are the output of the entity.
 
 	generic(
-			LEN : integer := 128 -- Anzahl von Bits, DEFAULT = 128
+			LEN : integer := 5 -- Anzahl von Bits, DEFAULT = 128
 		);
 		
 	port (
@@ -163,7 +163,7 @@ begin
 
 -------------------------------------------------------------------------------
 --
--- Process rnd_valid_proc: triggered by rndnumb
+-- Process rnd_valid_proc: triggered by clk_fast and rnd_en
 -- if new rndnumb is generated, validation flag is set
 --
 	rnd_valid_proc: process(clk_fast, rnd_en)
@@ -187,8 +187,6 @@ begin
 		if(reset = '1') then		
 			send_trans <= '0';
 			data_trans <= (others => '0');
-			test_fin   <= '0';
-			en_7seg    <= '0';
 			state      <= STATE_IDLE;
 		
 		elsif(rising_edge(clk_fast)) then		
