@@ -42,10 +42,11 @@ architecture beh of prng is
 
 	signal seed_flag : std_logic := '0';
 
-	signal bit_sig : integer range (LEN - 1) to 0 := 0;
-	signal j_sig : integer range (LEN - 1) to 0 := 0;
-	signal u_sig : integer range (LEN - 1) to 0 := 0;
-	signal x_sig : integer range (LEN - 1) to 0 := 0;
+	signal bit_sig : integer range 0 to LEN := 0;
+	signal j_sig : integer range 0 to (LEN - 1) := 0;
+	signal u_sig : integer range 0 to (LEN - 1) := 0;
+	signal x_sig : integer range 0 to (LEN - 1) := 0;
+	signal init : std_logic := '1';
 
 	-- States:
 	type type_state is (
@@ -163,7 +164,7 @@ begin
 			
 			when STATE_IDLE =>
 				rnd_en <= '0';
-				state_bbs_next <= STATE_OUTPUT;
+				state_bbs_next <= STATE_SEED;
 		
 			when STATE_SEED =>
 				if seed_flag = '1' then
@@ -181,14 +182,11 @@ begin
 			
 			when STATE_OUTPUT =>
 				
-				if bit = (LEN - 1) then
+				if bit = LEN then
 					rndnumb <= rndnumb_temp; -- Zufallszahl ausgeben
 					rnd_en <= '1';
 					state_bbs_next <= STATE_IDLE;
 				else
-					bit := bit + 1;
-					bit_sig <= bit;
-					
 					if bit = 0 then
 						null;
 					else
@@ -199,16 +197,24 @@ begin
 						end loop;
 						bit_i := parity_v; 		
 
-						rndnumb_temp(bit) := bit_i; -- i.tes Bit schreiben
+						rndnumb_temp(bit - 1) := bit_i; -- i.tes Bit schreiben
 
-						x := u; -- nächsten Iterationswert übergeben
-					end if;								 
+						x_sig <= u; -- nächsten Iterationswert übergeben
+					end if;	
+					
+					bit := bit + 1;
+					bit_sig <= bit;
+					init <= '1';
 					state_bbs_next <= STATE_BBS_S;
 				end if;
 					
 			when STATE_BBS_S =>
-				u := 0;
-				j := LEN - 1;
+				if init = '1' then
+					u_sig <= 0;
+					j := LEN - 1;
+					j_sig <= j;
+					init <= '0';
+				end if;
 				
 				if j = 0 then
 					state_bbs_next <= STATE_OUTPUT;
@@ -231,6 +237,7 @@ begin
 				if u >= M then
 					u := u -M;
 				end if;
+				u_sig <= u;
 				j := j - 1;
 				j_sig <= j;
 			
