@@ -42,6 +42,11 @@ architecture beh of prng is
 
 	signal seed_flag : std_logic := '0';
 
+	signal bit_sig : integer range (LEN - 1) to 0 := 0;
+	signal j_sig : integer range (LEN - 1) to 0 := 0;
+	signal u_sig : integer range (LEN - 1) to 0 := 0;
+	signal x_sig : integer range (LEN - 1) to 0 := 0;
+
 	-- States:
 	type type_state is (
 		STATE_IDLE,
@@ -54,7 +59,10 @@ architecture beh of prng is
 	-- States:
 	type type_state_bbs is (
 		STATE_IDLE,
-		STATE_OUTPUT
+		STATE_SEED,
+		STATE_OUTPUT,
+		STATE_BBS_S,
+		STATE_MULT
 	);
 
 	signal state_bbs, state_bbs_next : type_state_bbs := STATE_IDLE;
@@ -131,15 +139,25 @@ begin
 	bbs_proc : process(seed_valid, state_bbs)
 --		variable i: integer := 0; -- Laufindex für while
 		variable x: integer := 0;
-		variable temp: integer := 0;
+		--variable temp: integer := 0;
 		variable temp_vec: std_logic_vector((LEN - 1) downto 0) := (others => '0');
 		variable bit_i: std_logic := '0';
 		variable parity_v: std_logic := '0';
 		variable rndnumb_temp: std_logic_vector((LEN - 1) downto 0) := (others => '0');
+
+		variable bit: integer := 0;
+		variable u:integer := 0;
+		variable j:integer := 0;
+		variable xi:std_logic_vector((LEN - 1) downto 0) := (others => '0');
+		
 		
 	begin
 	
 		state_bbs_next <= state_bbs;
+		bit := bit_sig;
+		j := j_sig;
+		u := u_sig;
+		x := x_sig;
 
 		case state_bbs is
 			
@@ -147,28 +165,102 @@ begin
 				rnd_en <= '0';
 				state_bbs_next <= STATE_OUTPUT;
 		
-			when STATE_OUTPUT =>
+			when STATE_SEED =>
 				if seed_flag = '1' then
 					x := seed_valid; -- Startwert initialisieren
-					for i in 0 to (LEN - 1) loop
-						temp := (x * x) mod M; --BBS Algorithmus
+					x_sig <= x;
 
-						temp_vec := std_logic_vector(to_unsigned(temp, temp_vec'length));
+					if x > M then
+						state_bbs_next <= STATE_IDLE;
+					else
+						state_bbs_next <= STATE_OUTPUT;
+					end if;
+				else
+					state_bbs_next <= STATE_IDLE;
+				end if;
+			
+			when STATE_OUTPUT =>
+				
+				if bit = (LEN - 1) then
+					rndnumb <= rndnumb_temp; -- Zufallszahl ausgeben
+					rnd_en <= '1';
+					state_bbs_next <= STATE_IDLE;
+				else
+					bit := bit + 1;
+					bit_sig <= bit;
+					
+					if bit = 0 then
+						null;
+					else
+						temp_vec := std_logic_vector(to_unsigned(u, temp_vec'length));
 
-						for j in temp_vec'range loop -- Paritätsbit berechnen	
-							parity_v := parity_v xor temp_vec(j);
+						for t in temp_vec'range loop -- Paritätsbit berechnen	
+							parity_v := parity_v xor temp_vec(t);
 						end loop;
 						bit_i := parity_v; 		
 
-						rndnumb_temp(i) := bit_i; -- i.tes Bit schreiben
+						rndnumb_temp(bit) := bit_i; -- i.tes Bit schreiben
 
-						x := temp; -- nächsten Iterationswert übergeben
-					end loop;
-
-					rndnumb <= rndnumb_temp; -- Zufallszahl ausgeben
-					rnd_en <= '1';
+						x := u; -- nächsten Iterationswert übergeben
+					end if;								 
+					state_bbs_next <= STATE_BBS_S;
 				end if;
-				state_bbs_next <= STATE_IDLE;
+					
+			when STATE_BBS_S =>
+				u := 0;
+				j := LEN - 1;
+				
+				if j = 0 then
+					state_bbs_next <= STATE_OUTPUT;
+				else
+					state_bbs_next <= STATE_MULT;
+				end if;
+		
+			when STATE_MULT =>
+				u := 2 * u;
+				xi := std_logic_vector(to_unsigned(x, LEN -1));
+
+				if xi(j) = '1' then
+					u := u + x;
+				end if;
+				
+				if u >= M then
+					u := u -M;
+				end if;
+					
+				if u >= M then
+					u := u -M;
+				end if;
+				j := j - 1;
+				j_sig <= j;
+			
+				state_bbs_next <= STATE_BBS_S;
+				
+				
+
+
+
+
+--					for i in 0 to (LEN - 1) loop
+--						-- BBS Algorithm : y = x*x % M
+--						
+--						temp := (x * x) mod M; --BBS Algorithmus
+--
+--						temp_vec := std_logic_vector(to_unsigned(temp, temp_vec'length));
+--
+--						for j in temp_vec'range loop -- Paritätsbit berechnen	
+--							parity_v := parity_v xor temp_vec(j);
+--						end loop;
+--						bit_i := parity_v; 		
+--
+--						rndnumb_temp(i) := bit_i; -- i.tes Bit schreiben
+--
+--						x := temp; -- nächsten Iterationswert übergeben
+--					end loop;
+--
+--					rndnumb <= rndnumb_temp; -- Zufallszahl ausgeben
+--					rnd_en <= '1';
+			
 																 
 		 	when others =>
 				null;
