@@ -11,8 +11,8 @@ create_project -part xc7a100t -force vivado/RNG
 
 read_vhdl TRNG_pkg.vhdl
 read_vhdl TRNG.vhdl
-read_vhdl PRNG_pkg.vhdl
-read_vhdl PRNG.vhdl
+#read_vhdl PRNG_pkg.vhdl
+#read_vhdl PRNG.vhdl
 read_vhdl SlowClock_pkg.vhdl
 read_vhdl SlowClock.vhdl
 read_vhdl 7seg_pkg.vhdl

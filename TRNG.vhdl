@@ -25,6 +25,7 @@ entity trng is
 		clk_fast: in std_logic;
 		seed: out std_logic_vector((LEN - 1) downto 0); 
 		seed_en: out std_logic
+--		seed: out std_logic
 	);
 
 end trng;
@@ -50,6 +51,7 @@ begin
 			i := i_sig;
 			
 			seed_array(i) <= clk_fast;
+--			seed <= clk_fast;
 			if i = (LEN - 1) then
 				i := 0;
 				seed <= seed_array;

@@ -25,7 +25,7 @@ entity rng is
 	-- 'R1', 'X', 'segment7' and 'UART_TX' are the output of the entity.
 
 	generic(
-			LEN : integer := 5 -- Anzahl von Bits, DEFAULT = 128
+			LEN : integer := 128 -- Anzahl von Bits, DEFAULT = 128
 		);
 		
 	port (
@@ -73,6 +73,9 @@ architecture beh of rng is
 	signal test_fin: std_logic := '0'; -- Flag for loop for NIST analyse
 	signal en_7seg : std_logic := '0'; -- Enable flag for 7seg module used for valid random number
 
+--	signal clk_count: integer:= 0;
+--	constant COUNT_MAX:integer := 10;
+
 	-- States:
 	type type_state is (
 		STATE_IDLE,
@@ -102,22 +105,22 @@ begin
 		port map (
 			clk_slow => clk_slow,
 			clk_fast => clk_fast,
-			seed => seed,
-			seed_en => seed_en
+			seed => rndnumb,
+			seed_en => rnd_en
 		);
 		
-	prng: entity work.prng
-		generic map(
-			LEN => LEN
-		)
-			
-		port map (
-			seed => seed,
-			Clk => clk_fast,
-			seed_en => seed_en,
-			rndnumb => rndnumb,
-			rnd_en => rnd_en
-		);
+--	prng: entity work.prng
+--		generic map(
+--			LEN => LEN
+--		)
+--			
+--		port map (
+--			seed => seed,
+--			Clk => clk_fast,
+--			seed_en => seed_en,
+--			rndnumb => rndnumb,
+--			rnd_en => rnd_en
+--		);
 		
 	sevenseg: entity work.sevenseg
 		generic map(
@@ -160,6 +163,22 @@ begin
 			rdy   => RDY,
 			tx    => UART_TX
 		);
+		
+--	clk_gen_proc: process(clk_fast)
+--		variable count: integer := 0;
+--	begin
+--		count := clk_count;
+--		if count = COUNT_MAX then
+--			count := 0;
+--			clk_slow <= not clk_slow;
+--			rndnumb <= "10101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010";
+--			rnd_en <= '1';
+--		else
+--			count := count + 1;
+--			rnd_en <= '0';
+--		end if;
+--		clk_count <= count;
+--	end process clk_gen_proc;
 
 -------------------------------------------------------------------------------
 --
