@@ -73,7 +73,7 @@ begin
 		wait for 2 ns;
 		en_new_numb <= '0';
 
-		wait for 20 ns;
+		wait for 2 ms;
 		
 		rndnumb <= "0000111010";
 		wait for 2 ns;
@@ -82,7 +82,7 @@ begin
 		en_new_numb <= '0';
 
 
-		wait for 20 ns;
+		wait for 2 ms;
 		
 		rndnumb <= "0011111010";
 		wait for 2 ns;
@@ -90,7 +90,7 @@ begin
 		wait for 2 ns;
 		en_new_numb <= '0';
 
-		wait for 20 ns;
+		wait for 2 ms;
 
 		assert false report "end of test" severity failure;
 

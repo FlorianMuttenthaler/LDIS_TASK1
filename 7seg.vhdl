@@ -36,11 +36,13 @@ end sevenseg;
 --	segment7:
 --
 architecture behavioral of sevenseg is
-	
 	type array_t is array (0 to 7) of std_logic_vector(3 downto 0);
-	
 	signal array_seg: array_t := (others => (others => '0'));  -- Initialisierung
-	signal digit:integer range 0 to 7  := 0;
+	signal digit_sig:integer range 0 to 7  := 0;
+
+	signal clk_temp:std_logic := '0';
+	signal clk_count: integer:= 0;
+	constant COUNT_MAX:integer := 50000;
 
 -------------------------------------------------------------------------------
 --
@@ -48,9 +50,7 @@ architecture behavioral of sevenseg is
 -- to the defined mapping of the segment light display
 --
 	function bcd_to_7seg (bcd: std_logic_vector(3 downto 0)) return std_logic_vector is 
-		
 	begin
-	
 		case bcd is
 			--------------------------abcdefg----------
 			when "0000"=> return "00000011"; -- '0'
@@ -69,15 +69,10 @@ architecture behavioral of sevenseg is
 			when "1101"=> return "00000010"; -- 'D'
 			when "1110"=> return "01100000"; -- 'E'
 			when "1111"=> return "01110000"; -- 'F'
-			
 			--nothing is displayed when a number more than F is given as input.
 			when others=> return "11111111";
-
 		end case;
-		
 	end bcd_to_7seg;
-
-
 begin
 
 -------------------------------------------------------------------------------
@@ -101,27 +96,39 @@ begin
 			for k in 0 to length_min - 1 loop
 				rndnumb_temp(k) := rndnumb(k);
 			end loop;
-			
 			for j in 0 to 7 loop
 				for i in 0 to 3 loop
 					array_seg(j)(i) <= rndnumb_temp(i + 4 * j);
 				end loop;
 			end loop;
 		end if;		
-
 	end process bcd_proc;
 
+clk_gen_proc: process(clk)
+		variable count: integer := 0;
+	begin
+		count := clk_count;
+		if count = COUNT_MAX then
+			count := 0;
+			clk_temp <= not clk_temp;
+		else
+			count := count + 1;
+		end if;
+		clk_count <= count;
+	end process clk_gen_proc;
+			
 -------------------------------------------------------------------------------
 --
 -- Process bcd_proc: triggered by clk
 -- this porcess runs in a ind of continious loop synchronized by the signal digit
 -- the process is used to write the right ouput to segment7 and the related anode
 --
-	write_proc: process (clk)
+	write_proc: process (clk_temp)
 		variable segment_temp:std_logic_vector(3 downto 0) := (others => '0');
+		variable digit:integer range 0 to 7 := 0;
 	begin
-		if rising_edge(clk) then
-			
+		if rising_edge(clk_temp) then
+			digit := digit_sig;
 			for i in segment_temp'range loop
 				segment_temp(i) := array_seg(digit)(i);
 			end loop;
@@ -156,13 +163,13 @@ begin
 					segment7 <= "11111111";
 			end case;
 			if digit < 7 then
-				digit <= digit + 1;
+				digit := digit + 1;
 			else
-				digit <= 0;
+				digit := 0;
 			end if;
+			digit_sig <= digit;
 		end if;
 	end process write_proc;
-	
 	
 end behavioral;
 --
