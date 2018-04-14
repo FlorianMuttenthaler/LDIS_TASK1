@@ -42,7 +42,7 @@ architecture behavioral of sevenseg is
 
 	signal clk_temp:std_logic := '0';
 	signal clk_count: integer:= 0;
-	constant COUNT_MAX:integer := 50000;
+	constant COUNT_MAX:integer := 6250;
 
 -------------------------------------------------------------------------------
 --
@@ -104,22 +104,29 @@ begin
 		end if;		
 	end process bcd_proc;
 
+-------------------------------------------------------------------------------
+--
+-- Process bcd_proc: clk
+-- generating local clock for timing requirements of 7seg display
+--
 clk_gen_proc: process(clk)
 		variable count: integer := 0;
 	begin
-		count := clk_count;
-		if count = COUNT_MAX then
-			count := 0;
-			clk_temp <= not clk_temp;
-		else
-			count := count + 1;
+		if rising_edge(clk) then
+			count := clk_count;
+			if count = COUNT_MAX then
+				count := 0;
+				clk_temp <= not clk_temp;
+			else
+				count := count + 1;
+			end if;
+			clk_count <= count;
 		end if;
-		clk_count <= count;
 	end process clk_gen_proc;
 			
 -------------------------------------------------------------------------------
 --
--- Process bcd_proc: triggered by clk
+-- Process bcd_proc: triggered by clk_temp
 -- this porcess runs in a ind of continious loop synchronized by the signal digit
 -- the process is used to write the right ouput to segment7 and the related anode
 --
@@ -135,31 +142,31 @@ clk_gen_proc: process(clk)
 			
 			case digit is
 				when 0 => 
-					anode <= "00000001";
+					anode <= "11111110";
 					segment7 <= bcd_to_7seg(segment_temp);
 				when 1 => 
-					anode <= "00000010";
+					anode <= "11111101";
 					segment7 <= bcd_to_7seg(segment_temp);
 				when 2 => 
-					anode <= "00000100";
+					anode <= "11111011";
 					segment7 <= bcd_to_7seg(segment_temp);
 				when 3 => 
-					anode <= "00001000";
+					anode <= "11110111";
 					segment7 <= bcd_to_7seg(segment_temp);
 				when 4 => 
-					anode <= "00010000";
+					anode <= "11101111";
 					segment7 <= bcd_to_7seg(segment_temp);
 				when 5 => 
-					anode <= "00100000";
+					anode <= "11011111";
 					segment7 <= bcd_to_7seg(segment_temp);
 				when 6 => 
-					anode <= "01000000";
+					anode <= "10111111";
 					segment7 <= bcd_to_7seg(segment_temp);
 				when 7 => 
-					anode <= "10000000";
+					anode <= "01111111";
 					segment7 <= bcd_to_7seg(segment_temp);
 				when others =>
-					anode <= "00000000";
+					anode <= "11111111";
 					segment7 <= "11111111";
 			end case;
 			if digit < 7 then
