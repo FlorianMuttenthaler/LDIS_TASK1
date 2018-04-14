@@ -9,7 +9,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.TRNG_pkg.all;
-use work.PRNG_pkg.all;
+--use work.PRNG_pkg.all;
 use work.slowclk_pkg.all;
 use work.sevenseg_pkg.all;
 
@@ -40,6 +40,9 @@ entity rng is
 		anode 	: out std_logic_vector(7 downto 0);
 		--UART_RX : in std_logic;
 		UART_TX : out std_logic
+--		output1 : out std_logic;
+--		output2 : out std_logic;
+--		output3 : out std_logic
 	);
 
 end rng;
@@ -50,7 +53,7 @@ architecture beh of rng is
 
 	constant CLK_FREQ    : integer := 100E6; -- UART parameter
 	constant BAUDRATE    : integer := 9600; -- UART parameter
-	constant TEST_RUNS	 : integer := 100000; -- Test Runs for NIST analyse tool
+	constant TEST_RUNS	 : integer := 10; --100000; -- Test Runs for NIST analyse tool
 	
 	signal RDY		 : std_logic := '1'; --UART parameter
 
@@ -72,7 +75,11 @@ architecture beh of rng is
 	signal run_sig : integer range 0 to TEST_RUNS := 0; -- Signal um die Testläufe mitzuzählen
 	signal test_fin: std_logic := '0'; -- Flag for loop for NIST analyse
 	signal en_7seg : std_logic := '0'; -- Enable flag for 7seg module used for valid random number
+	
+	signal len_sig : integer range 0 to LEN := 0;
 
+--	signal tx : std_logic;
+	
 --	signal clk_count: integer:= 0;
 --	constant COUNT_MAX:integer := 10;
 
@@ -82,13 +89,18 @@ architecture beh of rng is
 		STATE_RUN,
 		STATE_VALID,
 		STATE_TEST,
-		STATE_PROD
+		STATE_PROD,
+		STATE_PROD_UART,
+		STATE_PROD_SEND
 	);
 
 	signal state, state_next : type_state := STATE_IDLE;
 	
 begin
 
+--	output1 <= tx;
+--	UART_TX <= tx;
+	
 	slowclk: entity work.slowclk
 		port map (
 			R2 => R2,
@@ -180,11 +192,11 @@ begin
 --		clk_count <= count;
 --	end process clk_gen_proc;
 
--------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 --
 -- Process rnd_valid_proc: triggered by clk_fast and rnd_en
 -- if new rndnumb is generated, validation flag is set
---
+
 	rnd_valid_proc: process(clk_fast, rnd_en)
 	begin
 		if rnd_en = '1' then
@@ -222,8 +234,9 @@ begin
 -- Process state_out_proc: triggered by state and mode
 -- basic state maschine with IDLE state, state for NIST analyse and state for segment display
 --
-	state_out_proc: process (state, mode)
+	state_out_proc: process (state, mode, start)
 		variable run : integer range 0 to TEST_RUNS := 0;
+		variable len_var : integer range 0 to LEN := 0;
 	begin
 
 		-- prevent latches
@@ -236,6 +249,11 @@ begin
 				when STATE_IDLE =>
 					en_7seg <= '0';
 					test_fin <= '0';
+					len_sig <= 0;
+					
+--					output2 <= '0';
+--					output3 <= '0';
+					
 					if mode = '1' then
 						state_next   <= STATE_RUN;
 					else
@@ -267,18 +285,18 @@ begin
 				when STATE_TEST =>
 				
 					-- UART rndnumb senden
-					for j in 0 to (LEN - 1) loop
-						if rndnumb(j) = '1' then
-							data_trans_next <= "00110001"; -- ASCII-Code: 1
-							send_trans_next <= '1';
-						else
-							data_trans_next <= "00110000"; -- ASCII-Code: 0
-							send_trans_next <= '1';
-						end if;
-						-- Leerzeichen nach jedem Bit eingefügt
-						data_trans_next <= "00100000"; -- ASCII-Code: Leerzeichen
-						send_trans_next <= '1';
-					end loop;
+--					for j in 0 to (LEN - 1) loop
+--						if rndnumb(j) = '1' then
+--							data_trans_next <= "00110001"; -- ASCII-Code: 1
+--							send_trans_next <= '1';
+--						else
+--							data_trans_next <= "00110000"; -- ASCII-Code: 0
+--							send_trans_next <= '1';
+--						end if;
+--						-- Leerzeichen nach jedem Bit eingefügt
+--						data_trans_next <= "00100000"; -- ASCII-Code: Leerzeichen
+--						send_trans_next <= '1';
+--					end loop;
 					
 					data_trans_next <= "00001010"; -- ASCII-Code: 10: Line Feed
 					send_trans_next <= '1';
@@ -286,26 +304,45 @@ begin
 					state_next <= STATE_RUN;
 					
 				when STATE_PROD =>
-					
 					if start = '1' then
 						en_7seg <= '1';
+						state_next   <= STATE_PROD_UART;
+					else
+--						output3 <= '1';
+						en_7seg <= '0';
+					end if;
+						
+				when STATE_PROD_UART =>
 						-- UART rndnumb senden
-						for j in 0 to (LEN - 1) loop
-							if rndnumb(j) = '1' then
+						len_var := len_sig;
+						
+						if len_var = (LEN - 1) then
+--							output2 <= '1';
+							data_trans_next <= "00001010"; -- ASCII-Code: 10: Line Feed
+							send_trans_next <= '1';
+							len_sig <= 0;
+							state_next   <= STATE_PROD;
+						else
+							if rndnumb(len_var) = '1' then
 								data_trans_next <= "00110001"; -- ASCII-Code: 1
 								send_trans_next <= '1';
 							else
 								data_trans_next <= "00110000"; -- ASCII-Code: 0
 								send_trans_next <= '1';
 							end if;
-							-- Leerzeichen nach jedem Bit eingefügt
-							data_trans_next <= "00100000"; -- ASCII-Code: Leerzeichen
-							send_trans_next <= '1';
-						end loop;
-						data_trans_next <= "00001010"; -- ASCII-Code: 10: Line Feed
-						send_trans_next <= '1';
-					end if;
+							state_next   <= STATE_PROD_SEND;
+						end if;
 					
+				when STATE_PROD_SEND =>
+					len_var := len_sig;
+					-- Leerzeichen nach jedem Bit eingefuegt
+					data_trans_next <= "00100000"; -- ASCII-Code: Leerzeichen
+					send_trans_next <= '1';
+					
+					len_var := len_var + 1;
+					len_sig <= len_var;
+					state_next   <= STATE_PROD_UART;
+										
 				when others =>
 					null;
 
