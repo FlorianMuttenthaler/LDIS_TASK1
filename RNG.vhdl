@@ -27,7 +27,7 @@ entity rng is
 	-- 'R1', 'X', 'segment7' and 'UART_TX' are the output of the entity.
 
 	generic(
-			LEN : integer := 5 -- Anzahl von Bits, DEFAULT = 128
+			LEN : integer := 32 -- Anzahl von Bits, DEFAULT = 128
 		);
 		
 	port (
@@ -54,7 +54,7 @@ end rng;
 architecture beh of rng is
 
 	constant CLK_FREQ    : integer := 100E6; -- UART parameter
-	constant BAUDRATE    : integer := 9600; -- UART parameter
+	constant BAUDRATE    : integer := 4800; -- UART parameter
 	constant TEST_RUNS   : integer := 10; --100000; -- Test Runs for NIST analyse tool
 	constant NR_OF_CLKS  : integer := 1000; -- Number of System Clock periods while the incoming signal 
 	
@@ -77,11 +77,11 @@ architecture beh of rng is
 	signal rnd_cpy : std_logic_vector((LEN - 1) downto 0) := (others => '0');
 	signal rnd_done : std_logic := '0';
 	
-	signal run_sig : integer range 0 to TEST_RUNS := 0; -- Signal um die Testläufe mitzuzählen
+	signal run_sig : integer range 0 to TEST_RUNS := 0; -- Signal um die TestlÃ¤ufe mitzuzÃ¤hlen
 	signal test_fin: std_logic := '0'; -- Flag for loop for NIST analyse
 	signal en_7seg : std_logic := '0'; -- Enable flag for 7seg module used for valid random number
 	
-	signal len_sig : integer range 0 to LEN := 0;
+	signal bit_cnt, bit_cnt_next : integer range 0 to LEN := 0;
 	
 	signal start_en : std_logic := '0';
 
@@ -92,7 +92,9 @@ architecture beh of rng is
 		STATE_VALID,
 		STATE_TEST,
 		STATE_PROD,
-		STATE_PROD_UART
+		STATE_PROD_UART,
+		STATE_PROD_UART_LF,
+		STATE_PROD_UART_CR
 	);
 
 	signal state, state_next : type_state := STATE_IDLE;
@@ -139,7 +141,7 @@ begin
 			
 		port map(
 			reset => reset,
-			rndnumb	=> rndnumb,
+			rndnumb	=> rnd_cpy,
 			clk	=> clk_fast,
 			en_new_numb	=> en_7seg,
 			segment7 => segment7,
@@ -221,6 +223,7 @@ begin
 			send_trans <= send_trans_next;
 			data_trans <= data_trans_next;		
 			state      <= state_next;
+			bit_cnt    <= bit_cnt_next;
 
 		end if;
 
@@ -241,14 +244,16 @@ begin
 		send_trans_next <= send_trans;
 		data_trans_next <= data_trans;
 		state_next      <= state;
+		bit_cnt_next    <= bit_cnt;
 		
 		case state is
 
 				when STATE_IDLE =>
-					en_7seg <= '0';
-					test_fin <= '0';
-					len_sig <= 0;
-					rnd_done <= '1';
+					en_7seg 			<= '0';
+					test_fin 		<= '0';
+					bit_cnt_next  	<= 0;
+					rnd_done 		<= '1';
+					send_trans_next <= '0';
 					
 --					output2 <= '0';
 --					output3 <= '0';
@@ -310,40 +315,60 @@ begin
 						en_7seg <= '0';
 						rnd_done <= '1';
 						send_trans_next <= '0';
+						state_next <= STATE_PROD;
 					end if;
 						
-				when STATE_PROD_UART =>
+				when STATE_PROD_UART => -- Idee von Constantin Schieber übernommen
 					-- UART rndnumb senden
-					len_var := len_sig;
 					send_trans_next <= '0';
 					
 					if RDY = '1' then
-						if len_var = (LEN - 1) then
---							output2 <= '1';
-							data_trans_next <= "00001010"; -- ASCII-Code: 10: Line Feed
-							send_trans_next <= '1';
-							len_sig <= 0;
-							state_next <= STATE_PROD;
+					
+--						data_trans_next 	<= rnd_cpy((len_var + 7) downto ((len_var)));
+--						send_trans_next		<= '1';
+						
+						if rnd_cpy(bit_cnt) = '1' then
+							data_trans_next <= "00110001"; -- ASCII-Code: 1
 						else
-							if rnd_cpy(len_var) = '1' then
-								data_trans_next <= "00110001"; -- ASCII-Code: 1
-							else
-								data_trans_next <= "00110000"; -- ASCII-Code: 0
-							end if;
-							
---								if (len_var + 8) > (LEN - 1) then
---									rest := (len_var + 8) - (LEN - 1)
---									
---								end if;
---								--data_trans_next <= rndnumb(len_var to (len_var + 7));
+							data_trans_next <= "00110000"; -- ASCII-Code: 0
+						end if;
+						
+						send_trans_next <= '1';
 
-							send_trans_next <= '1';
-							len_var := len_var + 1;
-							len_sig <= len_var;
+						if bit_cnt = (LEN - 1) then
+							bit_cnt_next <= 0;
+							state_next <= STATE_PROD_UART_LF;
+						else
+							bit_cnt_next <= bit_cnt + 1;
 							state_next <= STATE_PROD_UART;
 						end if;
 					end if;
-										
+				
+				when STATE_PROD_UART_LF => -- Idee von Constantin Schieber uebernommen
+					
+					send_trans_next <= '0';
+					
+					if RDY = '1' then
+					
+						data_trans_next <= "00001010"; -- ASCII-Code: 10: Line Feed
+						send_trans_next <= '1';
+						
+						state_next <= STATE_PROD_UART_CR;
+					end if;
+
+				when STATE_PROD_UART_CR => -- Idee von Constantin Schieber uebernommen
+					
+					send_trans_next <= '0';
+					
+					if RDY = '1' then
+						
+						data_trans_next <= "00001101"; -- ASCII-Code: 13: Carriage Return
+						send_trans_next <= '1';
+						
+						state_next <= STATE_IDLE;
+						
+					end if;					
+					
 				when others =>
 					null;
 
