@@ -13,19 +13,20 @@ use ieee.numeric_std.all;
 entity sevenseg is
 
 	-- 'LEN' is the generic value of the entity.
-	-- 'rndnumb' and 'clk' and 'en_new_numb' are the inputs of sevenseg entity.
+	-- 'reset', 'rndnumb', 'clk' and 'en_new_numb' are the inputs of sevenseg entity.
 	-- 'segment7' and 'anode' are the output of the entity.
 
 	generic(
 			LEN : integer := 128 -- Anzahl von Bits, DEFAULT = 128
 		);
 		
-	port (
+	port (	
+		reset 		: in std_logic;
 		rndnumb		: in std_logic_vector((LEN - 1) downto 0);
-		clk		: in std_logic;
+		clk			: in std_logic;
 		en_new_numb	: in std_logic;	-- New rndnumb to display			
-		segment7	: out std_logic_vector(7 downto 0);  -- 8 bit decoded output.
-		anode		: out std_logic_vector(7 downto 0)  -- 8 bit output for anodes.
+		segment7		: out std_logic_vector(7 downto 0);  -- 8 bit decoded output.
+		anode			: out std_logic_vector(7 downto 0)  -- 8 bit output for anodes.
 	);
 
 end sevenseg;
@@ -106,9 +107,7 @@ begin
 
 -------------------------------------------------------------------------------
 --
--- Process bcd_proc: clk
--- generating local clock for timing requirements of 7seg display
---
+
 clk_gen_proc: process(clk)
 		variable count: integer := 0;
 	begin
@@ -126,15 +125,18 @@ clk_gen_proc: process(clk)
 			
 -------------------------------------------------------------------------------
 --
--- Process bcd_proc: triggered by clk_temp
+-- Process bcd_proc: triggered by clk
 -- this porcess runs in a ind of continious loop synchronized by the signal digit
 -- the process is used to write the right ouput to segment7 and the related anode
 --
-	write_proc: process (clk_temp)
+	write_proc: process (reset, clk_temp)
 		variable segment_temp:std_logic_vector(3 downto 0) := (others => '0');
 		variable digit:integer range 0 to 7 := 0;
 	begin
-		if rising_edge(clk_temp) then
+		if reset = '1' then	--Schaltet die 7-Segment Anzeige aus
+			anode <= "11111111";
+			segment7 <= "11111111";
+		elsif rising_edge(clk_temp) then
 			digit := digit_sig;
 			for i in segment_temp'range loop
 				segment_temp(i) := array_seg(digit)(i);

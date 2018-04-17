@@ -14,21 +14,22 @@ package sevenseg_pkg is
 
 	component sevenseg is
 
-		-- 'LEN' is the generic value of the entity.
-		-- 'rndnumb' and 'clk' and 'en_new_numb' are the inputs of sevenseg entity.
-		-- 'segment7' and 'anode' are the output of the entity.
+	-- 'LEN' is the generic value of the entity.
+	-- 'reset', 'rndnumb', 'clk' and 'en_new_numb' are the inputs of sevenseg entity.
+	-- 'segment7' and 'anode' are the output of the entity.
 
-		generic(
-				LEN : integer := 128 -- Anzahl von Bits, DEFAULT = 128
-			);
-			
-		port (
-			rndnumb		: in std_logic_vector((LEN - 1) downto 0);
-			clk		: in std_logic;
-			en_new_numb	: in std_logic; -- New rndnumb to display
-			segment7	: out std_logic_vector(7 downto 0);  -- 8 bit decoded output.
-			anode		: out std_logic_vector(7 downto 0)  -- 8 bit output for anodes.
-		);
+	generic(
+		LEN : integer := 128 -- Anzahl von Bits, DEFAULT = 128
+	);
+		
+	port (	
+		reset 		: in std_logic;
+		rndnumb		: in std_logic_vector((LEN - 1) downto 0);
+		clk		: in std_logic;
+		en_new_numb	: in std_logic; -- New rndnumb to display
+		segment7	: out std_logic_vector(7 downto 0);  -- 8 bit decoded output.
+		anode		: out std_logic_vector(7 downto 0)  -- 8 bit output for anodes.
+	);
 	
 	end component sevenseg;
 	

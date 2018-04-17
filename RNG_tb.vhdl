@@ -4,99 +4,98 @@
 --
 -------------------------------------------------------------------------------
 --
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+use work.RNG_pkg.all;
+
+
 --  A testbench has no ports.
 entity rng_tb is
 end rng_tb;
 --
 -------------------------------------------------------------------------------
 --
-architecture behav of rng_tb is
-
-	--  Declaration of the component that will be instantiated.
-	component adder
-
-  		port (
-			length, x,y: in unsigned integer;
-			clk_fast, reset, mode, start: in std_logic;	
-			rndnumb: out unsigned integer;
-		);
-
-	end component;
+architecture beh of rng_tb is
 
 	--  Specifies which entity is bound with the component.
-	for adder_0: adder use entity work.adder;
-	signal i0, i1, ci, s, co : bit;
+	for rng_0: rng use entity work.rng;	
 
+	constant LEN : integer := 32; -- Anzahl von Bits
+	constant clk_period : time := 1 ns;
+	
+	signal R2       :	std_logic;
+	signal clk_fast : std_logic;
+	signal reset	 : std_logic;
+	signal mode		 :	std_logic;
+	signal start	 :	std_logic;
+	signal R1		 : std_logic;
+	signal X			 : std_logic;
+	signal segment7 : std_logic_vector(7 downto 0);
+	signal anode 	 : std_logic_vector(7 downto 0);
+	signal UART_TX  : std_logic;
+	signal rndnumb  : std_logic_vector((LEN - 1) downto 0);
+	
 begin
 
 	--  Component instantiation.
-	adder_0: adder port map (
-		i0 => i0,
-	 	i1 => i1,
-		ci => ci,
-		s => s,
-		co => co
-	);
+	rng_0: rng
+		generic map(
+			LEN => LEN
+		)
+			
+		port map (
+			rndnumb => rndnumb,
+			R2	=> R2,
+			clk_fast => clk_fast,
+			reset => reset,
+			mode => mode,
+			start => start,
+			R1 => R1,
+			X => X,
+			segment7 => segment7,
+			anode => anode,
+			UART_TX => UART_TX
+		);
+		
+	Clk_process : process
+	
+	begin
+		clk_fast <= '0';
+		wait for clk_period/2;
+		clk_fast <= '1';
+		wait for clk_period/2;
+
+	end process clk_process;	
 
 	--  This process does the real job.
-	process
-
-		type pattern_type is record
-
-			--  The inputs of the adder.
-			i0, i1, ci : bit;
-
-			--  The expected outputs of the adder.
-			s, co : bit;
-
-		end record;
-
-		--  The patterns to apply.
-
-		type pattern_array is array (natural range <>) of pattern_type;
-
-		constant patterns : pattern_array := (
-
-			('0', '0', '0', '0', '0'),
-			('0', '0', '1', '1', '0'),
-			('0', '1', '0', '1', '0'),
-			('0', '1', '1', '0', '1'),
-			('1', '0', '0', '1', '0'),
-			('1', '0', '1', '0', '1'),
-			('1', '1', '0', '0', '1'),
-			('1', '1', '1', '1', '1')
-
-		);
+	stimuli : process
 
 	begin
+		wait for 100 ns;
 
-		--  Check each pattern.
-		for i in patterns'range loop
+		mode <= '0';
+		
+		wait for 1 ns;
+		
+		start <= '1';
+		rndnumb <= "01101010110101001111101110010101";
+		
+		wait for 1.5 ns;
+			
+		start <= '0';
+		
+		wait for 100 ns;
 
-			--  Set the inputs.
-			i0 <= patterns(i).i0;
-			i1 <= patterns(i).i1;
-			ci <= patterns(i).ci;
-
-			--  Wait for the results.
-			wait for 1 ns;
-
-			--  Check the outputs.
-			assert s = patterns(i).s
-				report "bad sum value" severity error;
-
-			assert co = patterns(i).co
-				report "bad carry out value" severity error;
-
-		end loop;
-
-		assert false report "end of test" severity note;
+		assert false report "end of test" severity failure;
 
 		--  Wait forever; this will finish the simulation.
 		wait;
 
-	end process;
+	end process stimuli;
 
-end rng_tb;
+end beh;
 --
 -------------------------------------------------------------------------------
