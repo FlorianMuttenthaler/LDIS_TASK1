@@ -7,6 +7,11 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+
+-- Library for buffer
+library UNISIM;
+use UNISIM.vcomponents.all;
+
 --
 -------------------------------------------------------------------------------
 --
@@ -29,28 +34,37 @@ end slowclk;
 --
 architecture beh of slowclk is
 	
-	component IBUF -- Input Buffer
-	port (
-		I: in  STD_LOGIC; 
-		O: out STD_LOGIC
-	);
-	end component;
-		
-	component OBUF -- Output Buffer
-	port(
-		I: in  STD_LOGIC; 
-		O: out STD_LOGIC
-	);
-	end component;
-	
 	signal R2O_sig : std_logic := '0';
 	signal R1I_sig : std_logic := '0';
 	signal XI_sig  : std_logic := '0';
-begin
 	
-	U1: IBUF port map (I => R2, O => R2O_sig);
-	U2: OBUF port map (I => R1I_sig, O => R1);
-	U3: OBUF port map (I => XI_sig, O => X);
+begin
+
+	-- IBUF: Single-ended Input Buffer
+	-- 7 Series
+	-- Xilinx HDL Libraries Guide, version 2012.2
+	IBUF_R2 : IBUF
+		port map(
+			O => R2O_sig, -- Buffer output
+			I => R2 -- Buffer input (connect directly to top-level port)
+		);
+	-- End of IBUF instantiation
+	
+	-- OBUF: Single-ended Output Buffer
+	-- 7 Series
+	-- Xilinx HDL Libraries Guide, version 2012.2
+	OBUF_R1 : OBUF
+	port map(
+			O => R1, -- Buffer output (connect directly to top-level port)
+			I => R1I_sig -- Buffer input
+		);
+	
+	OBUF_X : OBUF
+		port map(
+			O => X, -- Buffer output (connect directly to top-level port)
+			I => XI_sig -- Buffer input
+		);
+	-- End of OBUF instantiation
 	
 	R1I_sig <= not R2O_sig; -- Inverter
 	XI_sig <= R2O_sig;
