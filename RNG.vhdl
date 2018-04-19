@@ -27,7 +27,7 @@ entity rng is
 	-- 'R1', 'X', 'segment7' and 'UART_TX' are the output of the entity.
 
 	generic(
-			LEN : integer := 32 -- Anzahl von Bits, DEFAULT = 128
+			LEN : integer := 16			-- Anzahl von Bits, DEFAULT = 128
 		);
 		
 	port (
@@ -54,7 +54,7 @@ end rng;
 architecture beh of rng is
 
 	constant CLK_FREQ    : integer := 100E6; -- UART parameter
-	constant BAUDRATE    : integer := 4800; -- UART parameter
+	constant BAUDRATE    : integer := 9600; -- UART parameter
 	constant TEST_RUNS   : integer := 10; --100000; -- Test Runs for NIST analyse tool
 	constant NR_OF_CLKS  : integer := 1000; -- Number of System Clock periods while the incoming signal 
 	
@@ -323,25 +323,32 @@ begin
 					send_trans_next <= '0';
 					
 					if RDY = '1' then
-					
---						data_trans_next 	<= rnd_cpy((len_var + 7) downto ((len_var)));
---						send_trans_next		<= '1';
-						
-						if rnd_cpy(bit_cnt) = '1' then
-							data_trans_next <= "00110001"; -- ASCII-Code: 1
-						else
-							data_trans_next <= "00110000"; -- ASCII-Code: 0
-						end if;
-						
-						send_trans_next <= '1';
-
-						if bit_cnt = (LEN - 1) then
+						send_trans_next		<= '1';
+						if bit_cnt = LEN then
 							bit_cnt_next <= 0;
 							state_next <= STATE_PROD_UART_LF;
 						else
-							bit_cnt_next <= bit_cnt + 1;
+							data_trans_next 	<= rnd_cpy((bit_cnt + 7) downto ((bit_cnt)));
+							--send_trans_next		<= '1';
+							bit_cnt_next <= bit_cnt + 8;
 							state_next <= STATE_PROD_UART;
 						end if;
+						
+--						if rnd_cpy(bit_cnt) = '1' then
+--							data_trans_next <= "00110001"; -- ASCII-Code: 1
+--						else
+--							data_trans_next <= "00110000"; -- ASCII-Code: 0
+--						end if;
+--						
+--						send_trans_next <= '1';
+--
+--						if bit_cnt = (LEN - 1) then
+--							bit_cnt_next <= 0;
+--							state_next <= STATE_PROD_UART_LF;
+--						else
+--							bit_cnt_next <= bit_cnt + 1;
+--							state_next <= STATE_PROD_UART;
+--						end if;
 					end if;
 				
 				when STATE_PROD_UART_LF => -- Idee von Constantin Schieber uebernommen
