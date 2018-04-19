@@ -32,26 +32,41 @@ use IEEE.STD_LOGIC_1164.ALL;
 -- any Xilinx primitives in this code.
 --library UNISIM;
 --use UNISIM.VComponents.all;
-
+--
+-------------------------------------------------------------------------------
+--
 entity Dbncr is
+
+	-- 'NR_OF_CLKS' is the generic value of the entity.
+	-- 'clk_i' and 'sig_i' are the inputs of sevenseg entity.
+	-- 'pls_o' is the output of the entity.
+		
    generic(
-      NR_OF_CLKS : integer := 4095 -- Number of System Clock periods while the incoming signal 
+      NR_OF_CLKS : integer := 1000 -- Number of System Clock periods while the incoming signal 
    );                              -- has to be stable until a one-shot output signal is generated
    port(
       clk_i : in std_logic;
       sig_i : in std_logic;
       pls_o : out std_logic
    );
+   
 end Dbncr;
-
+--
+-------------------------------------------------------------------------------
+--
 architecture Behavioral of Dbncr is
 
-signal cnt : integer range 0 to NR_OF_CLKS-1;
-signal sigTmp : std_logic;
-signal stble, stbleTmp : std_logic;
+	signal cnt : integer range 0 to NR_OF_CLKS-1;
+	signal sigTmp : std_logic;
+	signal stble, stbleTmp : std_logic;
 
 begin
 
+-------------------------------------------------------------------------------
+--
+-- Process DEB: triggered by clk_i
+-- Count the number of clock periods if the signal is stable
+--
    DEB: process(clk_i)
    begin
       if rising_edge(clk_i) then
@@ -68,6 +83,11 @@ begin
       end if;
    end process DEB;
 
+-------------------------------------------------------------------------------
+--
+-- Process PLS: triggered by clk_i
+-- 
+--
    PLS: process(clk_i)
    begin
       if rising_edge(clk_i) then

@@ -25,7 +25,7 @@ package sevenseg_pkg is
 	port (	
 		reset 		: in std_logic;
 		rndnumb		: in std_logic_vector((LEN - 1) downto 0);
-		clk		: in std_logic;
+		clk			: in std_logic;
 		en_new_numb	: in std_logic; -- New rndnumb to display
 		segment7	: out std_logic_vector(7 downto 0);  -- 8 bit decoded output.
 		anode		: out std_logic_vector(7 downto 0)  -- 8 bit output for anodes.

@@ -15,7 +15,7 @@ package trng_pkg is
 	component trng is
 
 		-- 'LEN' is the generic value of the entity.
-		-- 'clk_slow', 'clk_fast' are the inputs of trng entity.
+		-- 'clk_slow' and 'clk_fast' are the inputs of trng entity.
 		-- 'seed' and 'seed_en' are the output of the entity.
 
 		generic(
@@ -23,10 +23,10 @@ package trng_pkg is
 		);
 		
 		port (
-			clk_slow: in std_logic;
-			clk_fast: in std_logic;
-			seed: out std_logic_vector((LEN - 1) downto 0); 
-			seed_en: out std_logic
+			clk_slow	: in  std_logic;
+			clk_fast	: in  std_logic;
+			seed		: out std_logic_vector((LEN - 1) downto 0); 
+			seed_en		: out std_logic
 		);
 	
 	end component trng;

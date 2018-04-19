@@ -25,8 +25,8 @@ entity sevenseg is
 		rndnumb		: in std_logic_vector((LEN - 1) downto 0);
 		clk			: in std_logic;
 		en_new_numb	: in std_logic;	-- New rndnumb to display			
-		segment7		: out std_logic_vector(7 downto 0);  -- 8 bit decoded output.
-		anode			: out std_logic_vector(7 downto 0)  -- 8 bit output for anodes.
+		segment7	: out std_logic_vector(7 downto 0);  -- 8 bit decoded output.
+		anode		: out std_logic_vector(7 downto 0)  -- 8 bit output for anodes.
 	);
 
 end sevenseg;
@@ -37,23 +37,25 @@ end sevenseg;
 --	segment7:
 --
 architecture behavioral of sevenseg is
+	constant COUNT_MAX:integer := 6250; -- Zeitslot = 1/8 ms
+	
 	type array_t is array (0 to 7) of std_logic_vector(3 downto 0);
-	signal array_seg: array_t := (others => (others => '0'));  -- Initialisierung
-	signal digit_sig:integer range 0 to 7  := 0;
+	signal array_seg : array_t := (others => (others => '0'));  -- Initialisierung
+	signal digit_sig : integer range 0 to 7  := 0;
 
-	signal clk_temp:std_logic := '0';
-	signal clk_count: integer:= 0;
-	constant COUNT_MAX:integer := 6250;
+	signal clk_temp : std_logic := '0';
+	signal clk_count : integer := 0;
 
 -------------------------------------------------------------------------------
 --
 -- Function bcd_to_7seg: used to map the hexadezimal numbers of random number
 -- to the defined mapping of the segment light display
+-- Idee uebernommen von den Examples von LDIS lecture
 --
 	function bcd_to_7seg (bcd: std_logic_vector(3 downto 0)) return std_logic_vector is 
 	begin
 		case bcd is
-			--------------------------abcdefg----------
+			----------------------abcdefgp---------
 			when "0000"=> return "00000011"; -- '0'
 			when "0001"=> return "10011111"; -- '1'
 			when "0010"=> return "00100101"; -- '2'
@@ -85,19 +87,21 @@ begin
 -- if random number is to large then the MSBs are cut
 --
 	bcd_proc: process (en_new_numb)
-		variable rndnumb_temp:std_logic_vector(32 downto 0) := (others => '0');
-		variable length_min:integer range 0 to 33 := 0;
+		variable rndnumb_temp : std_logic_vector(32 downto 0) := (others => '0');
+		variable length_min : integer range 0 to 33 := 0;
 	begin
-		if en_new_numb = '1' then
-			if LEN < rndnumb_temp'length then
+		if en_new_numb = '1' then -- Display new random number
+			if LEN < rndnumb_temp'length then -- Laenge kuerzen
 				length_min := LEN;
 			else
 				length_min := rndnumb_temp'length;
 			end if;
-			for k in 0 to length_min - 1 loop
+			
+			for k in 0 to length_min - 1 loop -- Temporaere Variable beschreiben
 				rndnumb_temp(k) := rndnumb(k);
 			end loop;
-			for j in 0 to 7 loop
+			
+			for j in 0 to 7 loop -- Array mit Werten fuellen (bcd codiert)
 				for i in 0 to 3 loop
 					array_seg(j)(i) <= rndnumb_temp(i + 4 * j);
 				end loop;
@@ -107,9 +111,11 @@ begin
 
 -------------------------------------------------------------------------------
 --
-
+-- Process clk_gen_proc: triggered by clk
+-- Clockgenerator: Zeitslot = 1/8 ms
+--
 clk_gen_proc: process(clk)
-		variable count: integer := 0;
+		variable count : integer := 0;
 	begin
 		if rising_edge(clk) then
 			count := clk_count;
@@ -125,24 +131,25 @@ clk_gen_proc: process(clk)
 			
 -------------------------------------------------------------------------------
 --
--- Process bcd_proc: triggered by clk
--- this porcess runs in a ind of continious loop synchronized by the signal digit
--- the process is used to write the right ouput to segment7 and the related anode
+-- Process write_proc: triggered by reset and clk_temp
+-- Wenn reset = 1 dann wird die 7-Segment Anzeige ausgeschaltet
+-- Es werden alle digits kontinuierlich refreshed
+-- Aenderung ist schnell genug, damit das menschliche Auge es nicht mitbekommt
 --
 	write_proc: process (reset, clk_temp)
-		variable segment_temp:std_logic_vector(3 downto 0) := (others => '0');
-		variable digit:integer range 0 to 7 := 0;
+		variable segment_temp : std_logic_vector(3 downto 0) := (others => '0');
+		variable digit : integer range 0 to 7 := 0;
 	begin
-		if reset = '1' then	--Schaltet die 7-Segment Anzeige aus
+		if reset = '1' then	-- Schaltet die 7-Segment Anzeige aus
 			anode <= "11111111";
 			segment7 <= "11111111";
 		elsif rising_edge(clk_temp) then
 			digit := digit_sig;
-			for i in segment_temp'range loop
+			for i in segment_temp'range loop -- Laedt Ziffer, die angezeigt werden soll
 				segment_temp(i) := array_seg(digit)(i);
 			end loop;
 			
-			case digit is
+			case digit is -- Schaltet richtiges digit aktiv und gibt die Ziffer aus
 				when 0 => 
 					anode <= "11111110";
 					segment7 <= bcd_to_7seg(segment_temp);

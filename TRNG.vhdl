@@ -13,7 +13,7 @@ use ieee.numeric_std.all;
 entity trng is
 
 	-- 'LEN' is the generic value of the entity.
-	-- 'clk_slow', 'clk_fast' are the inputs of trng entity.
+	-- 'clk_slow' and 'clk_fast' are the inputs of trng entity.
 	-- 'seed' and 'seed_en' are the output of the entity.
 
 	generic(
@@ -21,11 +21,10 @@ entity trng is
 	);
 	
 	port (
-		clk_slow: in std_logic;
-		clk_fast: in std_logic;
-		seed: out std_logic_vector((LEN - 1) downto 0); 
-		seed_en: out std_logic
---		seed: out std_logic
+		clk_slow	: in  std_logic;
+		clk_fast	: in  std_logic;
+		seed		: out std_logic_vector((LEN - 1) downto 0); 
+		seed_en		: out std_logic
 	);
 
 end trng;
@@ -33,14 +32,15 @@ end trng;
 -------------------------------------------------------------------------------
 --
 architecture beh of trng is
+
 	signal i_sig: integer range 0 to LEN := 0;
-	signal seed_array:std_logic_vector((LEN - 1) downto 0) := (others => '0');
+	signal seed_array: std_logic_vector((LEN - 1) downto 0) := (others => '0');
 	
 begin
 
 -------------------------------------------------------------------------------
 --
--- Process state_out_proc: triggered by clk_slow
+-- Process trng_proc: triggered by clk_slow
 -- fulfills a seed array with values of clk_fast sampled by clk_slow
 --
 	trng_proc : process(clk_slow)
@@ -48,23 +48,22 @@ begin
 	begin
 	
 		if rising_edge(clk_slow) then
-			i := i_sig;
+			i := i_sig; -- Counter aktualisieren
 			
-			seed_array(i) <= clk_fast;
---			seed <= clk_fast;
+			seed_array(i) <= clk_fast; -- Array befuellen
+			
 			if i = (LEN - 1) then
 				i := 0;
-				seed <= seed_array;
+				seed <= seed_array; -- Randomnumber ausgeben
 				seed_en <= '1';
 			else
 				i := i + 1;
 				seed_en <= '0';
 			end if;
-			i_sig <= i;
+			i_sig <= i; -- Counter speichern
 		end if;
 		
 	end process trng_proc;
-
 
 end beh;
 --

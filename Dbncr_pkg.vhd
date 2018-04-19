@@ -19,7 +19,7 @@ package Dbncr_pkg is
 		-- 'pls_o' is the output of the entity.
 
 		generic(
-      NR_OF_CLKS : integer := 4095 -- Number of System Clock periods while the incoming signal 
+      NR_OF_CLKS : integer := 1000 -- Number of System Clock periods while the incoming signal 
 		);                              -- has to be stable until a one-shot output signal is generated
 		port(
 			clk_i : in std_logic;
