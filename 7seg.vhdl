@@ -80,13 +80,13 @@ begin
 
 -------------------------------------------------------------------------------
 --
--- Process bcd_proc: triggered by en_new_numb
+-- Process bcd_proc: triggered by en_new_numb and rndnumb
 -- if en_new_numb = 1 then a new random number will be displayed
 -- algorithm of the process is based on array that can be displayed with a fixed size
 -- if random number is to short than leading zeros are implemented
 -- if random number is to large then the MSBs are cut
 --
-	bcd_proc: process (en_new_numb)
+	bcd_proc: process (en_new_numb, rndnumb)
 		variable rndnumb_temp : std_logic_vector(32 downto 0) := (others => '0');
 		variable length_min : integer range 0 to 33 := 0;
 	begin
@@ -97,8 +97,20 @@ begin
 				length_min := rndnumb_temp'length;
 			end if;
 			
+--			for k in 0 to 32 - 1 loop
+--				if k <= length_min - 1 then
+--					rndnumb_temp(k) := rndnumb(k); -- Temporaere Variable beschreiben
+--				else
+--					rndnumb_temp(k) := '0'; -- Restliche Werte mit 0 beschreiben um Latches zuvermeiden
+--				end if;
+--			end loop;
+			
 			for k in 0 to length_min - 1 loop -- Temporaere Variable beschreiben
 				rndnumb_temp(k) := rndnumb(k);
+			end loop;
+			
+			for k in length_min to 32 - 1 loop -- Restliche Werte mit 0 beschreiben um Latches zuvermeiden
+				rndnumb_temp(k) := '0';
 			end loop;
 			
 			for j in 0 to 7 loop -- Array mit Werten fuellen (bcd codiert)
@@ -106,6 +118,8 @@ begin
 					array_seg(j)(i) <= rndnumb_temp(i + 4 * j);
 				end loop;
 			end loop;
+		else
+			null;
 		end if;		
 	end process bcd_proc;
 
