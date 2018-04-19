@@ -19,6 +19,8 @@ read_vhdl 7seg_pkg.vhdl
 read_vhdl 7seg.vhdl
 read_vhdl uart/uart_tx/uart_tx_pkg.vhd
 read_vhdl uart/uart_tx/uart_tx.vhd
+read_vhdl Dbncr_pkg.vhd
+read_vhdl Dbncr.vhd
 
 read_vhdl RNG.vhdl
 
