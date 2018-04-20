@@ -27,7 +27,7 @@ entity rng is
 	-- 'R1', 'X', 'segment7', 'anode' and 'UART_TX' are the outputs of the entity.
 
 	generic(
-			LEN : integer := 16 -- Anzahl von Bits, DEFAULT = 128
+			LEN : integer := 256			-- Anzahl von Bits, DEFAULT = 128
 		);
 		
 	port (
@@ -273,11 +273,12 @@ begin
 					state_next <= STATE_PROD;
 				end if;
 					
-			when STATE_TEST =>	
+			when STATE_TEST =>
+				send_trans_next <= '0';
 				if test_fin = '1' then
 					null;
 				else
-					if run_cnt = (TEST_RUNS - 1) then
+					if run_cnt = TEST_RUNS then
 						test_fin <= '1'; -- Test finished
 					else
 						rnd_done <= '1'; -- get new random number (used)
@@ -301,7 +302,7 @@ begin
 						bit_cnt_next <= 0; -- reset bit counter
 						state_next <= STATE_TEST_UART_LF;
 					else
-						data_trans_next <= rnd_cpy((bit_cnt + 7) downto ((bit_cnt))); -- send 8 bit of random number
+						data_trans_next <= rndnumb((bit_cnt + 7) downto ((bit_cnt))); -- send 8 bit of random number
 						send_trans_next <= '1';
 						bit_cnt_next <= bit_cnt + 8; -- increment bit counter
 						state_next <= STATE_TEST_UART;
@@ -363,7 +364,7 @@ begin
 				
 				if rdy_trans = '1' then -- UART is ready for next transmission?
 					
-					if bit_cnt = LEN then -- all bits sended?
+					if (bit_cnt * 8) = LEN then -- all bits sended?
 						bit_cnt_next <= 0; -- reset bit counter
 						state_next <= STATE_PROD_UART_LF;
 					else
