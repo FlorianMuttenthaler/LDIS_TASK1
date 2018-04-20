@@ -53,12 +53,12 @@ architecture beh of rng is
 
 	constant CLK_FREQ    : integer := 100E6; -- UART parameter
 	constant BAUDRATE    : integer := 9600;  -- UART parameter
-	constant TEST_RUNS   : integer := 10; --100000; -- Test Runs for NIST analyse tool
+	constant TEST_RUNS   : integer := 100000; --100000; -- Test Runs for NIST analyse tool
 	constant NR_OF_CLKS  : integer := 1000; -- Number of System Clock periods while the incoming signal, for Debouncer
 	constant TEST_MODE 	: std_logic := '1';
 	
 	-- UART Transmit Signals
-	signal rdy_trans : std_logic := '1'; 
+	signal rdy_trans : std_logic; 
 	signal send_trans, send_trans_next  : std_logic;
 	signal data_trans, data_trans_next  : std_logic_vector(7 downto 0);
 
@@ -308,7 +308,7 @@ begin
 					
 					if bit_cnt = LEN then -- all bits sended?
 						bit_cnt_next <= 0; -- reset bit counter
-						state_next <= STATE_TEST_UART_LF;
+						state_next <= STATE_TEST;
 					else
 						data_trans_next <= rndnumb((bit_cnt + 7) downto ((bit_cnt))); -- send 8 bit of random number
 						send_trans_next <= '1';
@@ -372,9 +372,9 @@ begin
 				
 				if rdy_trans = '1' then -- UART is ready for next transmission?
 					
-					if (bit_cnt * 8) = LEN then -- all bits sended?
+					if bit_cnt = LEN then -- all bits sended?
 						bit_cnt_next <= 0; -- reset bit counter
-						state_next <= STATE_PROD_UART_LF;
+						state_next <= STATE_IDLE;
 					else
 						data_trans_next <= rnd_cpy((bit_cnt + 7) downto ((bit_cnt))); -- send 8 bit of random number
 						send_trans_next <= '1';
