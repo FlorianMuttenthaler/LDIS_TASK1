@@ -27,11 +27,11 @@ entity rng is
 	-- 'R1', 'X', 'segment7', 'anode' and 'UART_TX' are the outputs of the entity.
 
 	generic(
-			LEN : integer := 256			-- Anzahl von Bits, DEFAULT = 128
+			LEN : integer := 256 -- Anzahl von Bits, DEFAULT = 128
 		);
 		
 	port (
-		R2				 : in std_logic;
+		R2				 : in std_logic; -- must be assigned to MRCC P (Master), e.g. LOC=H16 #IO_L13P_T2_MRCC_15
 		clk_fast 	 : in std_logic;
 		reset			 : in std_logic;
 		mode			 : in std_logic;
@@ -53,7 +53,7 @@ architecture beh of rng is
 
 	constant CLK_FREQ    : integer := 100E6; -- UART parameter
 	constant BAUDRATE    : integer := 9600;  -- UART parameter
-	constant TEST_RUNS   : integer := 100000; --100000; -- Test Runs for NIST analyse tool
+	constant TEST_RUNS   : integer := 100000; -- Test Runs for NIST analyse tool
 	constant NR_OF_CLKS  : integer := 1000; -- Number of System Clock periods while the incoming signal, for Debouncer
 	constant TEST_MODE 	: std_logic := '1';
 	
@@ -125,6 +125,7 @@ begin
 			seed_en => rnd_en
 		);
 		
+	-- not used
 --	prng: entity work.prng
 --		generic map(
 --			LEN => LEN
@@ -151,7 +152,9 @@ begin
 			segment7 => segment7,
 			anode => anode
 		);
-		
+	
+	-- Von Martin Mosbeck
+	-- not yet used
 	-- uart_recv : entity work.uart_rx
 		-- generic map(
 			-- CLK_FREQ => CLK_FREQ,
@@ -166,6 +169,7 @@ begin
 			-- data_new => data_recv_new
 		-- );
 		
+	-- Von Martin Mosbeck
 	uart_trans : entity work.uart_tx
 		generic map(
 			CLK_FREQ => CLK_FREQ,
@@ -308,9 +312,9 @@ begin
 					
 					if bit_cnt = LEN then -- all bits sended?
 						bit_cnt_next <= 0; -- reset bit counter
-						state_next <= STATE_TEST;
+						state_next <= STATE_TEST_UART_LF;
 					else
-						data_trans_next <= rndnumb((bit_cnt + 7) downto ((bit_cnt))); -- send 8 bit of random number
+						data_trans_next <= rndnumb((bit_cnt + 7) downto (bit_cnt)); -- send 8 bit of random number
 						send_trans_next <= '1';
 						bit_cnt_next <= bit_cnt + 8; -- increment bit counter
 						state_next <= STATE_TEST_UART;
@@ -374,7 +378,7 @@ begin
 					
 					if bit_cnt = LEN then -- all bits sended?
 						bit_cnt_next <= 0; -- reset bit counter
-						state_next <= STATE_IDLE;
+						state_next <= STATE_PROD_UART_LF;
 					else
 						data_trans_next <= rnd_cpy((bit_cnt + 7) downto ((bit_cnt))); -- send 8 bit of random number
 						send_trans_next <= '1';
