@@ -31,17 +31,18 @@ entity rng is
 		);
 		
 	port (
-		R2			: in std_logic;
-		clk_fast : in std_logic;
-		reset		: in std_logic;
-		mode		: in std_logic;
-		start		: in std_logic;
-		R1			: out std_logic;
-		X			: out std_logic;
-		segment7	: out std_logic_vector(7 downto 0);
-		anode 	: out std_logic_vector(7 downto 0);
-		UART_TX 	: out std_logic
---		UART_RX  : in std_logic
+		R2				 : in std_logic;
+		clk_fast 	 : in std_logic;
+		reset			 : in std_logic;
+		mode			 : in std_logic;
+		start			 : in std_logic;
+		R1				 : out std_logic;
+		X				 : out std_logic;
+		segment7		 : out std_logic_vector(7 downto 0);
+		anode 		 : out std_logic_vector(7 downto 0);
+		UART_TX 		 : out std_logic;
+--		UART_RX  	 : in std_logic;
+		LED_TEST_FIN : out std_logic
 	);
 
 end rng;
@@ -191,6 +192,8 @@ begin
 			pls_o   => start_en
 		);
 		
+	LED_TEST_FIN <= test_fin;
+		
 -----------------------------------------------------------------------------
 --
 -- Process rnd_valid_proc: triggered by clk_fast, rnd_en, rnd_done and rndnumb
@@ -199,16 +202,16 @@ begin
 --
 	rnd_valid_proc: process(clk_fast, rnd_en, rnd_done, rndnumb)
 	begin
-	
-		if rnd_en = '1' then
-			rnd_valid <= '1';
-			if rnd_done = '1' then
-				rnd_cpy <= rndnumb;	
+		if rising_edge(clk_fast) then
+			if rnd_en = '1' then
+				rnd_valid <= '1';
+				if rnd_done = '1' then
+					rnd_cpy <= rndnumb;	
+				end if;
+			else
+				rnd_valid <= '0';
 			end if;
-		else
-			rnd_valid <= '0';
 		end if;
-		
 	end process rnd_valid_proc;		
 
 -------------------------------------------------------------------------------
@@ -257,10 +260,11 @@ begin
 
 			when STATE_IDLE =>
 				-- Reset flags
-				en_7seg 			<= '0';
-				test_fin 		<= '0';
-				bit_cnt_next  	<= 0;
-				rnd_done 		<= '1';
+				en_7seg <= '0';
+				test_fin <= '0';
+				bit_cnt_next <= 0;
+				run_cnt_next <= 0;
+				rnd_done <= '1';
 				send_trans_next <= '0';
 									
 				if mode = TEST_MODE then
@@ -292,14 +296,13 @@ begin
 				send_trans_next <= '0';
 				
 				if rdy_trans = '1' then -- UART is ready for next transmission?
-					send_trans_next <= '1'; -- Warum hier schon 1?
 					
 					if bit_cnt = LEN then -- all bits sended?
 						bit_cnt_next <= 0; -- reset bit counter
 						state_next <= STATE_TEST_UART_LF;
 					else
 						data_trans_next <= rnd_cpy((bit_cnt + 7) downto ((bit_cnt))); -- send 8 bit of random number
-						--send_trans_next		<= '1';
+						send_trans_next <= '1';
 						bit_cnt_next <= bit_cnt + 8; -- increment bit counter
 						state_next <= STATE_TEST_UART;
 					end if;
@@ -359,14 +362,13 @@ begin
 				send_trans_next <= '0';
 				
 				if rdy_trans = '1' then -- UART is ready for next transmission?
-					send_trans_next <= '1'; -- Warum hier schon 1?
 					
 					if bit_cnt = LEN then -- all bits sended?
 						bit_cnt_next <= 0; -- reset bit counter
 						state_next <= STATE_PROD_UART_LF;
 					else
 						data_trans_next <= rnd_cpy((bit_cnt + 7) downto ((bit_cnt))); -- send 8 bit of random number
-						--send_trans_next		<= '1';
+						send_trans_next <= '1';
 						bit_cnt_next <= bit_cnt + 8; -- increment bit counter
 						state_next <= STATE_PROD_UART;
 					end if;

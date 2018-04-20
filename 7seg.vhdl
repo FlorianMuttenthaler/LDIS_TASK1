@@ -97,20 +97,12 @@ begin
 				length_min := rndnumb_temp'length;
 			end if;
 			
---			for k in 0 to 32 - 1 loop
---				if k <= length_min - 1 then
---					rndnumb_temp(k) := rndnumb(k); -- Temporaere Variable beschreiben
---				else
---					rndnumb_temp(k) := '0'; -- Restliche Werte mit 0 beschreiben um Latches zuvermeiden
---				end if;
---			end loop;
-			
-			for k in 0 to length_min - 1 loop -- Temporaere Variable beschreiben
-				rndnumb_temp(k) := rndnumb(k);
-			end loop;
-			
-			for k in length_min to 32 - 1 loop -- Restliche Werte mit 0 beschreiben um Latches zuvermeiden
-				rndnumb_temp(k) := '0';
+			for k in 0 to 32 - 1 loop
+				if k <= length_min - 1 then
+					rndnumb_temp(k) := rndnumb(k); -- Temporaere Variable beschreiben
+				else
+					rndnumb_temp(k) := '0'; -- Restliche Werte mit 0 beschreiben um Latches zuvermeiden
+				end if;
 			end loop;
 			
 			for j in 0 to 7 loop -- Array mit Werten fuellen (bcd codiert)
