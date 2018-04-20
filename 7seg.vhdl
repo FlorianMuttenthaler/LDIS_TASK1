@@ -80,39 +80,41 @@ begin
 
 -------------------------------------------------------------------------------
 --
--- Process bcd_proc: triggered by en_new_numb and rndnumb
+-- Process bcd_proc: triggered by clk, en_new_numb and rndnumb
 -- if en_new_numb = 1 then a new random number will be displayed
 -- algorithm of the process is based on array that can be displayed with a fixed size
 -- if random number is to short than leading zeros are implemented
 -- if random number is to large then the MSBs are cut
 --
-	bcd_proc: process (en_new_numb, rndnumb)
+	bcd_proc: process (clk, en_new_numb, rndnumb)
 		variable rndnumb_temp : std_logic_vector(32 downto 0) := (others => '0');
 		variable length_min : integer range 0 to 33 := 0;
 	begin
-		if en_new_numb = '1' then -- Display new random number
-			if LEN < rndnumb_temp'length then -- Laenge kuerzen
-				length_min := LEN;
-			else
-				length_min := rndnumb_temp'length;
-			end if;
-			
-			for k in 0 to 32 - 1 loop
-				if k <= length_min - 1 then
-					rndnumb_temp(k) := rndnumb(k); -- Temporaere Variable beschreiben
+		if rising_edge(clk) then
+			if en_new_numb = '1' then -- Display new random number
+				if LEN < rndnumb_temp'length then -- Laenge kuerzen
+					length_min := LEN;
 				else
-					rndnumb_temp(k) := '0'; -- Restliche Werte mit 0 beschreiben um Latches zuvermeiden
+					length_min := rndnumb_temp'length;
 				end if;
-			end loop;
-			
-			for j in 0 to 7 loop -- Array mit Werten fuellen (bcd codiert)
-				for i in 0 to 3 loop
-					array_seg(j)(i) <= rndnumb_temp(i + 4 * j);
+				
+				for k in 0 to 32 - 1 loop
+					if k <= length_min - 1 then
+						rndnumb_temp(k) := rndnumb(k); -- Temporaere Variable beschreiben
+					else
+						rndnumb_temp(k) := '0'; -- Restliche Werte mit 0 beschreiben um Latches zuvermeiden
+					end if;
 				end loop;
-			end loop;
-		else
-			null;
-		end if;		
+				
+				for j in 0 to 7 loop -- Array mit Werten fuellen (bcd codiert)
+					for i in 0 to 3 loop
+						array_seg(j)(i) <= rndnumb_temp(i + 4 * j);
+					end loop;
+				end loop;
+			else
+				null;
+			end if;	
+		end if;
 	end process bcd_proc;
 
 -------------------------------------------------------------------------------

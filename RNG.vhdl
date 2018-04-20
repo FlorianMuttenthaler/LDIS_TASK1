@@ -74,15 +74,15 @@ architecture beh of rng is
 	
 	-- Random number
 	signal rnd_valid : std_logic := '0'; -- Signal for validation of actual random number
-	signal rnd_done : std_logic := '0'; -- Signal for used random number 
+	signal rnd_done, rnd_done_next : std_logic := '0'; -- Signal for used random number 
 	signal rnd_cpy : std_logic_vector((LEN - 1) downto 0) := (others => '0'); -- Signal for copy of actual random number
 	
 	-- Test mode
 	signal run_cnt, run_cnt_next : integer range 0 to TEST_RUNS := 0; -- Counter for test runs
-	signal test_fin: std_logic := '0'; -- Flag for test finish, NIST analyse
+	signal test_fin, test_fin_next : std_logic := '0'; -- Flag for test finish, NIST analyse
 	
 	-- Prod mode
-	signal en_7seg : std_logic := '0'; -- Enable flag for 7seg module used for valid random number
+	signal en_7seg, en_7seg_next : std_logic := '0'; -- Enable flag for 7seg module used for valid random number
 	signal bit_cnt, bit_cnt_next : integer range 0 to LEN := 0; -- Bit counter for UART communication
 	
 	-- States:
@@ -191,7 +191,8 @@ begin
 			sig_i   => start,
 			pls_o   => start_en
 		);
-		
+	
+	-- LED ein-/ausschalten, signalisiert Ende des Test mode
 	LED_TEST_FIN <= test_fin;
 		
 -----------------------------------------------------------------------------
@@ -234,6 +235,9 @@ begin
 			state      <= state_next;
 			bit_cnt    <= bit_cnt_next;
 			run_cnt	  <= run_cnt_next;
+			en_7seg	  <= en_7seg_next;
+			test_fin	  <= test_fin_next;
+			rnd_done	  <= rnd_done_next;
 
 		end if;
 
@@ -242,11 +246,12 @@ begin
 -------------------------------------------------------------------------------
 --
 -- Process state_out_proc: triggered by state, mode, start_en, send_trans, data_trans, bit_cnt, 
---	run_cnt, test_fin, rnd_valid, rdy_trans and rnd_cpy
+--	run_cnt, en_7seg, test_fin, rnd_done, rnd_valid, rdy_trans, rndnumb and rnd_cpy
 -- basic state maschine with IDLE state, state for NIST analyse and state for segment display
 --
 	state_out_proc: process (state, mode, start_en, send_trans, data_trans, bit_cnt, 
-									 run_cnt, test_fin, rnd_valid, rdy_trans, rnd_cpy)
+									 run_cnt, en_7seg, test_fin, rnd_done, rnd_valid, 
+									 rdy_trans, rndnumb, rnd_cpy)
 	begin
 
 		-- prevent latches
@@ -255,16 +260,19 @@ begin
 		state_next      <= state;
 		bit_cnt_next    <= bit_cnt;
 		run_cnt_next	 <= run_cnt;
+		en_7seg_next	 <= en_7seg;
+		test_fin_next   <= test_fin;
+		rnd_done_next	 <= rnd_done;
 		
 		case state is
 
 			when STATE_IDLE =>
 				-- Reset flags
-				en_7seg <= '0';
-				test_fin <= '0';
+				en_7seg_next <= '0';
+				test_fin_next <= '0';
 				bit_cnt_next <= 0;
 				run_cnt_next <= 0;
-				rnd_done <= '1';
+				rnd_done_next <= '1';
 				send_trans_next <= '0';
 									
 				if mode = TEST_MODE then
@@ -279,9 +287,9 @@ begin
 					null;
 				else
 					if run_cnt = TEST_RUNS then
-						test_fin <= '1'; -- Test finished
+						test_fin_next <= '1'; -- Test finished
 					else
-						rnd_done <= '1'; -- get new random number (used)
+						rnd_done_next <= '1'; -- get new random number (used)
 						run_cnt_next <= run_cnt + 1; -- Increment counter
 						state_next <= STATE_TEST_VALID;
 					end if;
@@ -289,7 +297,7 @@ begin
 				
 			when STATE_TEST_VALID =>
 				if rnd_valid = '1' then	-- Abfrage ob neue rndnumb vorhanden
-					rnd_done <= '0'; -- random number in use
+					rnd_done_next <= '0'; -- random number in use
 					state_next <= STATE_TEST_UART;
 				end if;	
 			
@@ -349,12 +357,12 @@ begin
 									
 			when STATE_PROD =>
 				if start_en = '1' then
-					en_7seg <= '1'; -- activate 7-Segment display
-					rnd_done <= '0'; -- random number in use
+					en_7seg_next <= '1'; -- activate 7-Segment display
+					rnd_done_next <= '0'; -- random number in use
 					state_next <= STATE_PROD_UART;
 				else
-					en_7seg <= '0'; -- deactivate 7-Segment display
-					rnd_done <= '1'; -- random number used
+					en_7seg_next <= '0'; -- deactivate 7-Segment display
+					rnd_done_next <= '1'; -- random number used
 					send_trans_next <= '0';
 					state_next <= STATE_PROD;
 				end if;
