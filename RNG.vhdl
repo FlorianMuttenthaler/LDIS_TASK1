@@ -305,7 +305,7 @@ begin
 					state_next <= STATE_TEST_UART;
 				end if;	
 			
-			when STATE_TEST_UART => -- Idee von Constantin Schieber uebernommen
+			when STATE_TEST_UART =>
 				send_trans_next <= '0';
 				
 				if rdy_trans = '1' then -- UART is ready for next transmission?
@@ -337,7 +337,7 @@ begin
 --						end if;
 				end if;
 				
-			when STATE_TEST_UART_LF => -- Idee von Constantin Schieber uebernommen
+			when STATE_TEST_UART_LF =>
 				send_trans_next <= '0';
 				
 				if rdy_trans = '1' then -- UART is ready for next transmission?
@@ -348,7 +348,7 @@ begin
 					state_next <= STATE_TEST_UART_CR;
 				end if;
 
-			when STATE_TEST_UART_CR => -- Idee von Constantin Schieber uebernommen
+			when STATE_TEST_UART_CR =>
 				send_trans_next <= '0';
 				
 				if rdy_trans = '1' then -- UART is ready for next transmission?
@@ -371,7 +371,7 @@ begin
 					state_next <= STATE_PROD;
 				end if;
 					
-			when STATE_PROD_UART => -- Idee von Constantin Schieber uebernommen
+			when STATE_PROD_UART =>
 				send_trans_next <= '0';
 				
 				if rdy_trans = '1' then -- UART is ready for next transmission?
@@ -403,7 +403,7 @@ begin
 --						end if;
 				end if;
 			
-			when STATE_PROD_UART_LF => -- Idee von Constantin Schieber uebernommen
+			when STATE_PROD_UART_LF =>
 				send_trans_next <= '0';
 				
 				if rdy_trans = '1' then -- UART is ready for next transmission?
@@ -414,7 +414,7 @@ begin
 					state_next <= STATE_PROD_UART_CR;
 				end if;
 
-			when STATE_PROD_UART_CR => -- Idee von Constantin Schieber uebernommen
+			when STATE_PROD_UART_CR =>
 				send_trans_next <= '0';
 				
 				if rdy_trans = '1' then -- UART is ready for next transmission?
