@@ -320,7 +320,7 @@ begin
 						state_next <= STATE_TEST_UART;
 					end if;
 					
---						if rnd_cpy(bit_cnt) = '1' then
+--						if rndnumb(bit_cnt) = '1' then
 --							data_trans_next <= "00110001"; -- ASCII-Code: 1
 --						else
 --							data_trans_next <= "00110000"; -- ASCII-Code: 0
@@ -330,10 +330,10 @@ begin
 --
 --						if bit_cnt = (LEN - 1) then
 --							bit_cnt_next <= 0;
---							state_next <= STATE_PROD_UART_LF;
+--							state_next <= STATE_TEST_UART_LF;
 --						else
 --							bit_cnt_next <= bit_cnt + 1;
---							state_next <= STATE_PROD_UART;
+--							state_next <= STATE_TEST_UART;
 --						end if;
 				end if;
 				
@@ -375,7 +375,7 @@ begin
 				send_trans_next <= '0';
 				
 				if rdy_trans = '1' then -- UART is ready for next transmission?
-					
+			
 					if bit_cnt = LEN then -- all bits sended?
 						bit_cnt_next <= 0; -- reset bit counter
 						state_next <= STATE_PROD_UART_LF;
